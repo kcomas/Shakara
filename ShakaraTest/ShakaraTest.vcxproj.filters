@@ -15,25 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Tokenizer\Tokenizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Tokenizer\TokenizerTypes.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="stdafx.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Tokenizer\Tokenizer.hpp">
+    <ClInclude Include="targetver.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Tokenizer\TokenizerTypes.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TokenizerTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
