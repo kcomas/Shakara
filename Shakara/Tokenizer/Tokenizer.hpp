@@ -11,9 +11,6 @@ namespace Shakara
 	/**
 	 * A simple Tokenizer implementation for
 	 * the language.
-	 *
-	 * Takes in a istream that should be
-	 * pre-opened.
 	 */
 	class Tokenizer
 	{

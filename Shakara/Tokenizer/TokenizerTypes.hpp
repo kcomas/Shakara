@@ -35,7 +35,15 @@ namespace Shakara
 
 	struct Token
 	{
-		TokenType   type  = TokenType::UNKNOWN;
-		std::string value = "";
+		TokenType   type   = TokenType::UNKNOWN;
+		std::string value  = "";
 	};
+
+	static inline bool IsArithmeticType(const TokenType& type)
+	{
+		return (type == TokenType::PLUS)     ||
+			   (type == TokenType::MINUS)    ||
+			   (type == TokenType::MULTIPLY) ||
+			   (type == TokenType::DIVIDE);
+	}
 }
