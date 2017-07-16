@@ -26,10 +26,18 @@ namespace Shakara
 				return *this;
 			}
 
+			inline RootNode& ShrinkToFit()
+			{
+				m_children.shrink_to_fit();
+
+				return *this;
+			}
+
 			inline size_t Children()
 			{
 				return m_children.size();
 			}
+
 
 			inline Node* operator[](const size_t index) const
 			{

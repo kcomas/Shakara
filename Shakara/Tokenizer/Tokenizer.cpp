@@ -127,6 +127,9 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 		case '(':
 			*type = TokenType::BEGIN_ARGS;
 			return true;
+		case ',':
+			*type = TokenType::ARG_SEPERATOR;
+			return true;
 		case ')':
 			*type = TokenType::END_ARGS;
 			return true;
@@ -235,8 +238,8 @@ bool Tokenizer::_IsSingleCharacterToken(char character)
 	case '{':
 	case '}':
 	case '(':
-	case ')':
 	case ',':
+	case ')':
 		return true;
 	}
 

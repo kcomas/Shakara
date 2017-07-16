@@ -34,12 +34,21 @@ namespace Shakara
 
 		private:
 			/**
-			 * Attempt to parse any type of
-			 * assignment, whether it be an
-			 * assignment of a function or
-			 * just another type
+			 * Attempt to parse an assignment
+			 * to a variable, such as an integer
+			 * assignment or otherwise
 			 */
-			void _ParseAssignment(
+			void _ParseVariableAssignment(
+				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
+			 * Attempt to parse a function definition
+			 */
+			void _ParseFunctionDefinition(
 				RootNode*           root,
 				std::vector<Token>& tokens,
 				size_t              index,

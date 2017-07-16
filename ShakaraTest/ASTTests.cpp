@@ -226,6 +226,13 @@ namespace ShakaraTest
 					static_cast<size_t>(3),
 					static_cast<size_t>(root.Children())
 				);
+
+				// Check if the first child is an
+				// assignment node
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[0]->Type())
+				);
 			}
 
 		};

@@ -10,27 +10,28 @@ namespace Shakara
 
 	enum class TokenType : uint8_t
 	{
-		UNKNOWN    = 0x00,
-		IDENTIFIER = 0x01,
+		UNKNOWN       = 0x00,
+		IDENTIFIER    = 0x01,
 
 		/**
 		 * Arithmatic Tokens
 		 */
-		PLUS        = 0x02,
-		MINUS       = 0x03,
-		MULTIPLY    = 0x04,
-		DIVIDE      = 0x05,
-		EQUAL       = 0x06,
-		BEGIN_ARGS  = 0x07,
-		END_ARGS    = 0x08,
-		BEGIN_BLOCK = 0x09,
-		END_BLOCK   = 0x0A,
+		PLUS          = 0x02,
+		MINUS         = 0x03,
+		MULTIPLY      = 0x04,
+		DIVIDE        = 0x05,
+		EQUAL         = 0x06,
+		BEGIN_ARGS    = 0x07,
+		ARG_SEPERATOR = 0x08,
+		END_ARGS      = 0x09,
+		BEGIN_BLOCK   = 0x0A,
+		END_BLOCK     = 0x0B,
 
 		/**
 		 * Type Tokens
 		 */
-		INTEGER    = 0x0B,
-		DECIMAL    = 0x0C
+		INTEGER       = 0x0C,
+		DECIMAL       = 0x0D
 	};
 
 	struct Token

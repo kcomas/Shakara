@@ -32,23 +32,46 @@ void ASTBuilder::Build(
 		// after this identifier, and if
 		// so, it's an assignment
 		if (tokens[index + 1].type == TokenType::EQUAL)
-			_ParseAssignment(
-				root,
-				tokens,
-				index,
-				&next
-			);
+		{
+			// Attempt to parse either a function definition
+			// or a variable assignment
+			//
+			// Differentiated by whether or not BEGIN_ARGS is
+			// after the equal sign or not
+			if (tokens[index + 2].type == TokenType::BEGIN_ARGS)
+				_ParseFunctionDefinition(
+					root,
+					tokens,
+					index,
+					&next
+				);
+			else
+				_ParseVariableAssignment(
+					root,
+					tokens,
+					index,
+					&next
+				);
+		}
 	}
 
+	// We still have more portions of the AST to build
+	// thus, continue building
+	//
+	// Otherwise, do some memory saving by resizing
+	// the RootNode vector to fit each child without
+	// any extra space
 	if (next > 0 && static_cast<size_t>(next) < tokens.size())
 		Build(
 			root,
 			tokens,
 			next
 		);
+	else
+		root->ShrinkToFit();
 }
 
-void ASTBuilder::_ParseAssignment(
+void ASTBuilder::_ParseVariableAssignment(
 	RootNode*           root,
 	std::vector<Token>& tokens,
 	size_t              index,
@@ -103,8 +126,8 @@ void ASTBuilder::_ParseAssignment(
 
 		assignment->Assignment(operation);
 	}
-	// There is no other operation to do, now
-	// check if this type is a identifier or
+	// There is no other nested operation to do,
+	// now check if this type is a identifier or
 	// a number of sorts
 	else if (
 		tokens[*next].type == TokenType::IDENTIFIER ||
@@ -126,6 +149,17 @@ void ASTBuilder::_ParseAssignment(
 	}
 
 	root->Insert(assignment);
+}
+
+void ASTBuilder::_ParseFunctionDefinition(
+	RootNode*           root,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
+	// TODO: Implement parsing of function definitions
+	// as well as add Nodes for such definitions
 }
 
 void ASTBuilder::_ParseBinaryOperation(
