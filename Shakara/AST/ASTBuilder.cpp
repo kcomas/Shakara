@@ -8,6 +8,7 @@
 #include "Nodes/ASTBinaryOperation.hpp"
 #include "Nodes/ASTIdentifierNode.hpp"
 #include "Nodes/ASTRootNode.hpp"
+#include "Nodes/ASTFunctionDeclarationNode.hpp"
 
 #include "../Tokenizer/TokenizerTypes.hpp"
 
@@ -15,13 +16,13 @@ using namespace Shakara;
 using namespace Shakara::AST;
 
 void ASTBuilder::Build(
-	RootNode* root,
+	RootNode*           root,
 	std::vector<Token>& tokens,
-	size_t index
+	size_t              index
 )
 {
 	const Token& token = tokens[index];
-	ptrdiff_t next     = -1;
+	ptrdiff_t next     = index + 1;
 
 	// Check if there is anything to do with
 	// an identifier first, as most portions
@@ -61,7 +62,10 @@ void ASTBuilder::Build(
 	// Otherwise, do some memory saving by resizing
 	// the RootNode vector to fit each child without
 	// any extra space
-	if (next > 0 && static_cast<size_t>(next) < tokens.size())
+	//
+	// Though, stop recursively building once we hit
+	// a end block token if the flag is set
+	if ((next > 0 && static_cast<size_t>(next) < tokens.size()))
 		Build(
 			root,
 			tokens,
@@ -82,8 +86,8 @@ void ASTBuilder::_ParseVariableAssignment(
 	// as the index passed in
 	*next = index;
 
-	// Create the regular nodes to be added
-	// to the 
+	// Create the assignment node to be
+	// added to the AST
 	AssignmentNode* assignment = new AssignmentNode();
 	assignment->Type(NodeType::ASSIGN);
 
@@ -158,8 +162,100 @@ void ASTBuilder::_ParseFunctionDefinition(
 	ptrdiff_t*          next
 )
 {
-	// TODO: Implement parsing of function definitions
-	// as well as add Nodes for such definitions
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
+	// Create the function declaration node
+	// to be added to the root
+	FunctionDeclaration* declaration = new FunctionDeclaration();
+	declaration->Type(NodeType::FUNCTION);
+
+	// Set the identifier using the
+	// index as the first node
+	IdentifierNode* identifier = new IdentifierNode();
+	identifier->Type(NodeType::IDENTIFIER);
+
+	identifier->Value(tokens[*next].value);
+
+	identifier->Parent(declaration);
+
+	declaration->Identifier(identifier);
+
+	// Move on to trying to parse arguments
+	(*next)++;
+
+	// Move on if this token is an equal sign
+	if (tokens[*next].type == TokenType::EQUAL)
+		(*next)++;
+
+	// Move on if this token is the beginning
+	// of the args
+	if (tokens[*next].type == TokenType::BEGIN_ARGS)
+		(*next)++;
+
+	// Start parsing arguments by using a
+	// while loop until an END_ARGS is found
+	// or until the end of the tokens
+	while (static_cast<size_t>((*next)) < tokens.size())
+	{
+		if (tokens[*next].type == TokenType::END_ARGS)
+			break;
+
+		if (tokens[*next].type != TokenType::IDENTIFIER)
+		{
+			// TODO: Throw an error here!
+			
+			(*next)++;
+
+			continue;
+		}
+
+		IdentifierNode* argument = new IdentifierNode();
+		argument->Type(NodeType::IDENTIFIER);
+
+		argument->Value(tokens[*next].value);
+
+		argument->Parent(declaration);
+
+		declaration->InsertArgument(argument);
+
+		(*next)++;
+	}
+
+	// Once we are done with the arguments, check if there's a
+	// BEGIN_BLOCK token at the current location
+	if (tokens[*next].type == TokenType::BEGIN_BLOCK)
+		(*next)++;
+
+	// Now, we can do the same kind of while loop for the
+	// arguments, but for statements within the body
+	RootNode* body = new RootNode();
+	
+	while (static_cast<size_t>((*next)) < tokens.size())
+	{
+		if (tokens[*next].type == TokenType::END_BLOCK)
+			break;
+
+		if (tokens[*next].type == TokenType::IDENTIFIER)
+		{
+			if (tokens[(*next) + 1].type == TokenType::EQUAL)
+				_ParseVariableAssignment(
+					body,
+					tokens,
+					*next,
+					next
+				);
+		}
+		else
+			(*next)++;
+	}
+
+	// Now add the body statements to the declaration
+	// and add the declaration to the root
+	declaration->Body(body);
+
+	root->Insert(declaration);
 }
 
 void ASTBuilder::_ParseBinaryOperation(
@@ -169,6 +265,10 @@ void ASTBuilder::_ParseBinaryOperation(
 	ptrdiff_t*          next
 )
 {
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
 	// Determine the type of node
 	// to create for the left hand
 	// side of the operation
@@ -183,7 +283,7 @@ void ASTBuilder::_ParseBinaryOperation(
 	// Now get the operation type
 	(*next)++;
 	const TokenType& type = tokens[*next].type;
-	NodeType         op   = NodeType::ROOT;
+	NodeType         op = NodeType::ROOT;
 
 	switch (type)
 	{
@@ -243,9 +343,9 @@ void ASTBuilder::_ParseBinaryOperation(
 		rightHand->Parent(operation);
 
 		operation->RightHand(rightHand);
-	}
 
-	(*next)++;
+		(*next)++;
+	}
 }
 
 inline void ASTBuilder::_CreateSingleNodeFromToken(

@@ -6,6 +6,11 @@ namespace Shakara
 {
 	namespace AST
 	{
+		/**
+		 * A node to be used as a root for a whole
+		 * AST, as well as for things like function
+		 * declarations.
+		 */
 		class RootNode : public Node
 		{
 		public:
@@ -37,7 +42,6 @@ namespace Shakara
 			{
 				return m_children.size();
 			}
-
 
 			inline Node* operator[](const size_t index) const
 			{

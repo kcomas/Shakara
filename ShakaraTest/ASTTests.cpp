@@ -235,6 +235,95 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(ASTBuildFunctionDeclaration)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					count    = 1
+					argument = 2 * 2
+					
+					add_to_counter = (value, other)
+					{
+						count = count + value
+
+						count = count + value + value
+					}
+					
+					stuff = 1
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be one child in
+				// the root node, the assignment node
+				Assert::AreEqual(
+					static_cast<size_t>(4),
+					static_cast<size_t>(root.Children())
+				);
+
+				// Check if the first child is an
+				// assignment node
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[0]->Type())
+				);
+
+				// Next, check if the second child
+				// is also an assignment node
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[1]->Type())
+				);
+
+				// Now for the more nitty gritty one
+				// check if the function declaration
+				// actually is a function declaration
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::FUNCTION),
+					static_cast<uint8_t>(root[2]->Type())
+				);
+
+				// Now, check the declaration more thoroughly
+				Shakara::AST::FunctionDeclaration* declaration = static_cast<Shakara::AST::FunctionDeclaration*>(root[2]);
+			
+				// Begin by checking if we have the right amount
+				// of arguments for the function
+				Assert::AreEqual(
+					static_cast<size_t>(2),
+					static_cast<size_t>(declaration->Arguments().size())
+				);
+
+				// Now check for the body of the function, which
+				// is a RootNode stuck in the node
+				//
+				// Should be two nodes
+				Shakara::AST::RootNode* body = static_cast<Shakara::AST::RootNode*>(declaration->Body());
+				
+				Assert::AreEqual(
+					static_cast<size_t>(2),
+					static_cast<size_t>(body->Children())
+				);
+
+				// Finally, check if the statement below the function
+				// declaration is intact and outside of the function
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[3]->Type())
+				);
+			}
+
 		};
 	}
 }

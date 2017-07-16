@@ -25,6 +25,9 @@ namespace Shakara
 			 * This is a recursive method, with each call
 			 * to something like "_ParseAssignment" returning
 			 * an index to skip to
+			 *
+			 * The "stopAtEndBlock" parameter is used for function
+			 * parsing
 			 */
 			void Build(
 				RootNode*           root,

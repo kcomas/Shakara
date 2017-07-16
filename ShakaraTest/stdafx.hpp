@@ -16,3 +16,4 @@
 #include "../Shakara/AST/Nodes/ASTRootNode.hpp"
 #include "../Shakara/AST/Nodes/ASTAssignmentNode.hpp"
 #include "../Shakara/AST/Nodes/ASTBinaryOperation.hpp"
+#include "../Shakara/AST/Nodes/ASTFunctionDeclarationNode.hpp"

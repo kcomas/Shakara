@@ -48,6 +48,9 @@
     <ClCompile Include="AST\Nodes\ASTRootNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AST\Nodes\ASTFunctionDeclarationNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.hpp">
@@ -81,6 +84,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AST\Nodes\ASTRootNode.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AST\Nodes\ASTFunctionDeclarationNode.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
