@@ -203,7 +203,7 @@ void ASTBuilder::_ParseBinaryOperation(
 		Node* rightHand = nullptr;
 		_CreateSingleNodeFromToken(
 			&rightHand,
-			tokens[index]
+			tokens[*next]
 		);
 
 		rightHand->Parent(operation);

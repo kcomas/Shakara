@@ -111,7 +111,7 @@ namespace ShakaraTest
 				std::string code = R"(
 					count = 1
 				
-					add_to_counter(value)
+					add_to_counter = (value)
 					{
 						count = count + value
 					}
@@ -126,7 +126,7 @@ namespace ShakaraTest
 
 				// Make sure that we have three tokens
 				// for this test statement
-				Assert::AreEqual(static_cast<size_t>(14), tokens.size());
+				Assert::AreEqual(static_cast<size_t>(15), tokens.size());
 
 				// This is going to be long, make sure that
 				// each type is accounted for, including
@@ -155,23 +155,28 @@ namespace ShakaraTest
 					L"Incorrect type! Expected IDENTIFIER!"
 				);
 				Assert::AreEqual(
-					static_cast<uint8_t>(Shakara::TokenType::BEGIN_ARGS),
+					static_cast<uint8_t>(Shakara::TokenType::EQUAL),
 					static_cast<uint8_t>(tokens[4].type),
+					L"Incorrect type! Expected IDENTIFIER!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::BEGIN_ARGS),
+					static_cast<uint8_t>(tokens[5].type),
 					L"Incorrect type! Expected BEGIN_ARGS!"
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
-					static_cast<uint8_t>(tokens[5].type),
+					static_cast<uint8_t>(tokens[6].type),
 					L"Incorrect type! Expected IDENTIFIER!"
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::END_ARGS),
-					static_cast<uint8_t>(tokens[6].type),
+					static_cast<uint8_t>(tokens[7].type),
 					L"Incorrect type! Expected END_ARGS!"
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::BEGIN_BLOCK),
-					static_cast<uint8_t>(tokens[7].type),
+					static_cast<uint8_t>(tokens[8].type),
 					L"Incorrect type! Expected BEGIN_BLOCK!"
 				);
 
@@ -179,32 +184,32 @@ namespace ShakaraTest
 				// to the count variable is valid
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
-					static_cast<uint8_t>(tokens[8].type),
+					static_cast<uint8_t>(tokens[9].type),
 					L"Incorrect type! Expected IDENTIFIER!"
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::EQUAL),
-					static_cast<uint8_t>(tokens[9].type),
+					static_cast<uint8_t>(tokens[10].type),
 					L"Incorrect type! Expected EQUAL!"
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
-					static_cast<uint8_t>(tokens[10].type),
+					static_cast<uint8_t>(tokens[11].type),
 					L"Incorrect type! Expected IDENTIFIER!"
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::PLUS),
-					static_cast<uint8_t>(tokens[11].type),
+					static_cast<uint8_t>(tokens[12].type),
 					L"Incorrect type! Expected PLUS!"
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
-					static_cast<uint8_t>(tokens[12].type),
+					static_cast<uint8_t>(tokens[13].type),
 					L"Incorrect type! Expected IDENTIFIER!"
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::END_BLOCK),
-					static_cast<uint8_t>(tokens[13].type),
+					static_cast<uint8_t>(tokens[14].type),
 					L"Incorrect type! Expected END_BLOCK!"
 				);
 			}

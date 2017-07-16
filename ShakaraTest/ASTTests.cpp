@@ -197,6 +197,37 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(ASTBuildMultiLineAssignment)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					count    = 1
+					argument = 2 * 2
+					named    = 2 * 2 * 9 / 2
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be one child in
+				// the root node, the assignment node
+				Assert::AreEqual(
+					static_cast<size_t>(3),
+					static_cast<size_t>(root.Children())
+				);
+			}
+
 		};
 	}
 }
