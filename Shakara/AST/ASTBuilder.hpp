@@ -37,6 +37,22 @@ namespace Shakara
 
 		private:
 			/**
+			 * Function that checks what the types are
+			 * of the current token to build a node.
+			 *
+			 * Can be reused in things such as functions
+			 *
+			 * Returns true if a node was created or false
+			 * if one was not made.
+			 */
+			bool _BuildIndividualNode(
+				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
 			 * Attempt to parse an assignment
 			 * to a variable, such as an integer
 			 * assignment or otherwise

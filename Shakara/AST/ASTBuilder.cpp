@@ -21,53 +21,16 @@ void ASTBuilder::Build(
 	size_t              index
 )
 {
-	const Token& token = tokens[index];
-	ptrdiff_t next     = index + 1;
+	// Build a new node from the tokens at
+	// the current index
+	ptrdiff_t next = index + 1;
 
-	// Check if there is anything to do with
-	// an identifier first, as most portions
-	// of the language deal with identifiers
-	if (token.type == TokenType::IDENTIFIER)
-	{
-		// Check if there's an equal sign
-		// after this identifier, and if
-		// so, it's an assignment
-		if (tokens[index + 1].type == TokenType::EQUAL)
-		{
-			// Attempt to parse either a function definition
-			// or a variable assignment
-			//
-			// Differentiated by whether or not BEGIN_ARGS is
-			// after the equal sign or not
-			if (tokens[index + 2].type == TokenType::BEGIN_ARGS)
-				_ParseFunctionDefinition(
-					root,
-					tokens,
-					index,
-					&next
-				);
-			else
-				_ParseVariableAssignment(
-					root,
-					tokens,
-					index,
-					&next
-				);
-		}
-		// For either increment or decrement variables
-		else if (
-			tokens[index + 1].type == TokenType::INCREMENT ||
-			tokens[index + 1].type == TokenType::DECREMENT
-		)
-		{
-			_ParseVariableIncrementDecrement(
-				root,
-				tokens,
-				index,
-				&next
-			);
-		}
-	}
+	_BuildIndividualNode(
+		root,
+		tokens,
+		index,
+		&next
+	);
 
 	// We still have more portions of the AST to build
 	// thus, continue building
@@ -86,6 +49,73 @@ void ASTBuilder::Build(
 		);
 	else
 		root->ShrinkToFit();
+}
+
+bool ASTBuilder::_BuildIndividualNode(
+	RootNode*           root,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
+	const Token& token = tokens[index];
+
+	// Check if there is anything to do with
+	// an identifier first, as most portions
+	// of the language deal with identifiers
+	if (token.type == TokenType::IDENTIFIER)
+	{
+		// Check if there's an equal sign
+		// after this identifier, and if
+		// so, it's an assignment
+		if (tokens[index + 1].type == TokenType::EQUAL)
+		{
+			// Attempt to parse either a function definition
+			// or a variable assignment
+			//
+			// Differentiated by whether or not BEGIN_ARGS is
+			// after the equal sign or not
+			if (tokens[index + 2].type == TokenType::BEGIN_ARGS)
+			{
+				_ParseFunctionDefinition(
+					root,
+					tokens,
+					index,
+					next
+				);
+			
+				return false;
+			}
+			else
+			{
+				_ParseVariableAssignment(
+					root,
+					tokens,
+					index,
+					next
+				);
+			
+				return true;
+			}
+		}
+		// For either increment or decrement variables
+		else if (
+			tokens[index + 1].type == TokenType::INCREMENT ||
+			tokens[index + 1].type == TokenType::DECREMENT
+			)
+		{
+			_ParseVariableIncrementDecrement(
+				root,
+				tokens,
+				index,
+				next
+			);
+
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void ASTBuilder::_ParseVariableAssignment(
@@ -327,17 +357,15 @@ void ASTBuilder::_ParseFunctionDefinition(
 		if (tokens[*next].type == TokenType::END_BLOCK)
 			break;
 
-		if (tokens[*next].type == TokenType::IDENTIFIER)
-		{
-			if (tokens[(*next) + 1].type == TokenType::EQUAL)
-				_ParseVariableAssignment(
-					body,
-					tokens,
-					*next,
-					next
-				);
-		}
-		else
+		// Attempt to build a new node for the
+		// function, if one is not able to be
+		// made, continue to the next token
+		if (!_BuildIndividualNode(
+			body,
+			tokens,
+			*next,
+			next
+		))
 			(*next)++;
 	}
 
