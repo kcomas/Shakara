@@ -223,6 +223,144 @@ namespace ShakaraTest
 					L"Incorrect type! Expected END_BLOCK!"
 				);
 			}
+
+			TEST_METHOD(TokenizeUraryIncrementDecrement)
+			{
+				std::string code = R"(
+					count++
+					
+					count--
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Make sure that we have four tokens
+				// for this test statement
+				Assert::AreEqual(static_cast<size_t>(4), tokens.size());
+			
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[0].type),
+					L"Incorrect token type at zero! Expected IDENTIFIER!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::INCREMENT),
+					static_cast<uint8_t>(tokens[1].type),
+					L"Incorrect token type at one! Expected INCREMENT!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[2].type),
+					L"Incorrect token type at two! Expected IDENTIFIER!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::DECREMENT),
+					static_cast<uint8_t>(tokens[3].type),
+					L"Incorrect token type at three! Expected DECREMENT!"
+				);
+			}
+
+			TEST_METHOD(TokenizeUraryArithmeticEqual)
+			{
+				std::string code = R"(
+					count += 1
+					count -= 1
+					count*=2
+					count /= 4
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Make sure that we have twelve tokens
+				// for this test statement
+				Assert::AreEqual(static_cast<size_t>(12), tokens.size());
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[0].type),
+					L"Incorrect token type at zero! Expected IDENTIFIER!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::PLUS_EQUAL),
+					static_cast<uint8_t>(tokens[1].type),
+					L"Incorrect token type at one! Expected PLUS_EQUAL!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::INTEGER),
+					static_cast<uint8_t>(tokens[2].type),
+					L"Incorrect token type at two! Expected INTEGER!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[3].type),
+					L"Incorrect token type at three! Expected IDENTIFIER!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::MINUS_EQUAL),
+					static_cast<uint8_t>(tokens[4].type),
+					L"Incorrect token type at four! Expected MINUS_EQUAL!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::INTEGER),
+					static_cast<uint8_t>(tokens[5].type),
+					L"Incorrect token type at five! Expected INTEGER!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[6].type),
+					L"Incorrect token type at six! Expected IDENTIFIER!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::MULTIPLY_EQUAL),
+					static_cast<uint8_t>(tokens[7].type),
+					L"Incorrect token type at seven! Expected MULTIPLY_EQUAL!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::INTEGER),
+					static_cast<uint8_t>(tokens[8].type),
+					L"Incorrect token type at eight! Expected INTEGER!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[9].type),
+					L"Incorrect token type at nine! Expected IDENTIFIER!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::DIVIDE_EQUAL),
+					static_cast<uint8_t>(tokens[10].type),
+					L"Incorrect token type at ten! Expected DIVIDE_EQUAL!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::INTEGER),
+					static_cast<uint8_t>(tokens[11].type),
+					L"Incorrect token type at eleven! Expected INTEGER!"
+				);
+			}
+
 		};
 	}
 }

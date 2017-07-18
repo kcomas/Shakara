@@ -17,6 +17,7 @@ TokenizeError Tokenizer::Tokenize(
 
 	std::string value   = "";
 	char        current = '\0';
+	char        last    = '\0';
 
 	// Read through each character in the
 	// file stream
@@ -43,14 +44,15 @@ TokenizeError Tokenizer::Tokenize(
 			tokens.push_back(token);
 
 			value.clear();
+			
+			last = current;
 
 			continue;
 		}
 
 		// Try and tokenize a single
-		// character token such as an
-		// addition symbol or
-		// multiplication
+		// single character token like
+		// the beginning of a block
 		if (_IsSingleCharacterToken(current))
 		{
 			// If we don't have an empty value
@@ -69,10 +71,22 @@ TokenizeError Tokenizer::Tokenize(
 			Token token;
 			_SetTokenFromValue(&token, std::string(1, current));
 
+			// Try and make a urary operator
+			if (_MakeUrary(
+				token,
+				tokens[tokens.size() - 1],
+				last
+			))
+				tokens.pop_back();
+
 			tokens.push_back(token);
+
+			last = current;
 
 			continue;
 		}
+
+		last = current;
 
 		value.push_back(current);
 	}
@@ -99,6 +113,94 @@ void Tokenizer::_SetTokenFromValue(Token* token, const std::string& value)
 
 	(*token).type  = type;
 	(*token).value = value;
+}
+
+bool Tokenizer::_MakeUrary(
+	Token& current,
+	const Token& last,
+	const char lastChar
+)
+{
+	// WARNING: Ugly code ahead!
+	if (
+		last.type    == TokenType::EQUAL &&
+		current.type == TokenType::EQUAL &&
+		lastChar     == '='
+	)
+	{
+		current.type  = TokenType::COMPARISON;
+		current.value = "==";
+
+		return true;
+	}
+	else if (
+		last.type    == TokenType::PLUS &&
+		current.type == TokenType::PLUS &&
+		lastChar     == '+'
+	)
+	{
+		current.type  = TokenType::INCREMENT;
+		current.value = "++";
+
+		return true;
+	}
+	else if (
+		last.type    == TokenType::MINUS &&
+		current.type == TokenType::MINUS &&
+		lastChar     == '-'
+	)
+	{
+		current.type  = TokenType::DECREMENT;
+		current.value = "--";
+
+		return true;
+	}
+	else if (
+		last.type    == TokenType::PLUS &&
+		current.type == TokenType::EQUAL &&
+		lastChar     == '+'
+	)
+	{
+		current.type  = TokenType::PLUS_EQUAL;
+		current.value = "+=";
+
+		return true;
+	}
+	else if (
+		last.type    == TokenType::MINUS &&
+		current.type == TokenType::EQUAL &&
+		lastChar     == '-'
+	)
+	{
+		current.type  = TokenType::MINUS_EQUAL;
+		current.value = "-=";
+
+		return true;
+	}
+	else if (
+		last.type    == TokenType::MULTIPLY &&
+		current.type == TokenType::EQUAL &&
+		lastChar     == '*'
+	)
+	{
+		current.type  = TokenType::MULTIPLY_EQUAL;
+		current.value = "*=";
+
+		return true;
+	}
+	else if (
+		last.type    == TokenType::DIVIDE &&
+		current.type == TokenType::EQUAL &&
+		lastChar     == '/'
+	)
+	{
+		current.type = TokenType::DIVIDE_EQUAL;
+		current.value = "/=";
+
+		return true;
+	}
+
+	return false;
 }
 
 bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string& value)
@@ -222,10 +324,6 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 	return false;
 }
 
-/**
-* Whether a character is a single token,
-* such as equal or minus.
-*/
 bool Tokenizer::_IsSingleCharacterToken(char character)
 {
 	switch (character)
