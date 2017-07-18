@@ -31,6 +31,10 @@ you will get `63`. I may add operator precedence
 at some point, or order expressions like an elementary
 math expression, but not as of now.
 
+Also supported are the operators as follows: `+=`, `-=`,
+`*=`, `/=`, `++`, and `--`. Which function the same as
+languages like C or C++.
+
 ### Variables
 
 Since Shakara is a dynamically typed language, you don't
@@ -52,6 +56,10 @@ Below is the syntax for function definition:
     {
         (body)
     }
+
+Functions are defined using the equals sign and then the arguments
+as a way to mirror assignment of actual variables (Also, I felt it
+was a little more straightforward to parse at that point).
 
 Then, after being defined, to call a function, use the line
 below:
