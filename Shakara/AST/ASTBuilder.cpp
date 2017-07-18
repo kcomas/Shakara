@@ -102,9 +102,27 @@ bool ASTBuilder::_BuildIndividualNode(
 		else if (
 			tokens[index + 1].type == TokenType::INCREMENT ||
 			tokens[index + 1].type == TokenType::DECREMENT
-			)
+		)
 		{
 			_ParseVariableIncrementDecrement(
+				root,
+				tokens,
+				index,
+				next
+			);
+
+			return true;
+		}
+		// For any assignment arithmetic operators
+		// such as += or -=
+		else if (
+			tokens[index + 1].type == TokenType::PLUS_EQUAL     ||
+			tokens[index + 1].type == TokenType::MINUS_EQUAL    ||
+			tokens[index + 1].type == TokenType::MULTIPLY_EQUAL ||
+			tokens[index + 1].type == TokenType::DIVIDE_EQUAL
+		)
+		{
+			_ParseVariableArithmeticAssignment(
 				root,
 				tokens,
 				index,
@@ -269,6 +287,121 @@ void ASTBuilder::_ParseVariableIncrementDecrement(
 	operation->RightHand(one);
 
 	operation->Parent(assignment);
+
+	assignment->Assignment(operation);
+
+	root->Insert(assignment);
+}
+
+void ASTBuilder::_ParseVariableArithmeticAssignment(
+	RootNode*           root,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
+	// Create an assignment node to increment
+	// the variable
+	//
+	// The reason for using an AssignmentNode
+	// as opposed to a new node type for these
+	// operators is for code and project simplicity
+	AssignmentNode* assignment = new AssignmentNode();
+	assignment->Type(NodeType::ASSIGN);
+
+	// Create the IdentifierNode to assign the
+	// increment or deincrement to
+	IdentifierNode* identifier = new IdentifierNode();
+	identifier->Type(NodeType::IDENTIFIER);
+
+	identifier->Value(tokens[(*next)].value);
+
+	identifier->Parent(assignment);
+
+	assignment->Identifier(identifier);
+
+	(*next)++;
+
+	// Create the binary operation for this
+	// operation
+	BinaryOperation* operation = new BinaryOperation();
+	operation->Type(NodeType::BINARY_OP);
+
+	// Create the left hand side of the operation
+	// with a copy of the current identifier
+	//
+	// This is kind of a hacky workaround, as each
+	// node recursively deletes, and will try to
+	// double delete if I use the same identifier
+	// instance
+	operation->LeftHand(new IdentifierNode(*identifier));
+
+	// Figure out if this is a increment or
+	// a decrement so that I can assign a
+	// correct binary operation
+	if (tokens[*next].type == TokenType::PLUS_EQUAL)
+		operation->Operation(NodeType::ADD);
+	else if (tokens[*next].type == TokenType::MINUS_EQUAL)
+		operation->Operation(NodeType::SUBTRACT);
+	else if (tokens[*next].type == TokenType::MULTIPLY_EQUAL)
+		operation->Operation(NodeType::MULTIPLY);
+	else if (tokens[*next].type == TokenType::DIVIDE_EQUAL)
+		operation->Operation(NodeType::DIVIDE);
+
+	// Move on for the next call
+	(*next)++;
+
+	// TODO: Throw an error if the type is incorrect
+
+	// Now to parse what to insert into the right hand
+	// side of the binary operation.
+	//
+	// This could be another binary operation or just
+	// a number of some type.
+	//
+	// This code is almost identical to the code used for
+	// parsing a regular variable assignment.
+	if (static_cast<size_t>((*next) + 1) < tokens.size() && IsArithmeticType(tokens[(*next) + 1].type))
+	{
+		BinaryOperation* nestedOp = new BinaryOperation();
+		nestedOp->Type(NodeType::BINARY_OP);
+
+		_ParseBinaryOperation(
+			nestedOp,
+			tokens,
+			*next,
+			next
+		);
+
+		nestedOp->Parent(operation);
+	
+		operation->RightHand(nestedOp);
+	}
+	// There is no other nested operation to do,
+	// now check if this type is a identifier or
+	// a number of sorts
+	else if (
+		tokens[*next].type == TokenType::IDENTIFIER ||
+		tokens[*next].type == TokenType::INTEGER ||
+		tokens[*next].type == TokenType::DECIMAL
+		)
+	{
+		Node* value = nullptr;
+		_CreateSingleNodeFromToken(
+			&value,
+			tokens[(*next)]
+		);
+
+		value->Parent(operation);
+
+		operation->RightHand(value);
+
+		(*next)++;
+	}
 
 	assignment->Assignment(operation);
 

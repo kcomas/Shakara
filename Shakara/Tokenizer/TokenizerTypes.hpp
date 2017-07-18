@@ -14,7 +14,7 @@ namespace Shakara
 		IDENTIFIER     = 0x01,
 
 		/**
-		 * Arithmatic Tokens
+		 * Arithmetic Tokens
 		 */
 		PLUS           = 0x02,
 		MINUS          = 0x03,

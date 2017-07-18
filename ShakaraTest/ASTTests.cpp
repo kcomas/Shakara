@@ -245,9 +245,9 @@ namespace ShakaraTest
 					
 					add_to_counter = (value, other)
 					{
-						count = count + value
+						count += value
 
-						count = count + value + value
+						count *= value + value
 					}
 					
 					stuff = 1
@@ -403,6 +403,147 @@ namespace ShakaraTest
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::AST::NodeType::SUBTRACT),
 					static_cast<uint8_t>(decrement->Operation())
+				);
+			}
+
+			TEST_METHOD(ASTBuildAssignmentArithmeticOperators)
+			{
+				// Create a test increment decrement
+				// and insert it into a stringstream
+				std::string statement = R"(
+					test += 1
+					test -= 2
+					test *= 4 + 4
+					test /= 2
+				)";
+
+				std::stringstream stream(statement, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be one child in
+				// the root node, the assignment node
+				Assert::AreEqual(
+					static_cast<size_t>(4),
+					static_cast<size_t>(root.Children())
+				);
+
+				// Now, recurse through and check each
+				// type and make sure they are all
+				// correct
+				Shakara::AST::AssignmentNode* plusEqualAssign = static_cast<Shakara::AST::AssignmentNode*>(root[0]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(plusEqualAssign->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::IDENTIFIER),
+					static_cast<uint8_t>(plusEqualAssign->GetIdentifier()->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(plusEqualAssign->GetAssignment()->Type())
+				);
+
+				// Check if the first node's binary operation is
+				// the correct sign
+				Shakara::AST::BinaryOperation* plusEqual = static_cast<Shakara::AST::BinaryOperation*>(plusEqualAssign->GetAssignment());
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ADD),
+					static_cast<uint8_t>(plusEqual->Operation())
+				);
+
+				// Now check the minus equal expression
+				Shakara::AST::AssignmentNode* minusEqualAssign = static_cast<Shakara::AST::AssignmentNode*>(root[1]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(minusEqualAssign->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::IDENTIFIER),
+					static_cast<uint8_t>(minusEqualAssign->GetIdentifier()->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(minusEqualAssign->GetAssignment()->Type())
+				);
+
+				// Check if the binary operation is
+				// the correct sign
+				Shakara::AST::BinaryOperation* minusEqual = static_cast<Shakara::AST::BinaryOperation*>(minusEqualAssign->GetAssignment());
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::SUBTRACT),
+					static_cast<uint8_t>(minusEqual->Operation())
+				);
+
+				// Now check the multiply equal expression
+				// This one should have a nested binary operation
+				// so make sure that is the case
+				Shakara::AST::AssignmentNode* multiplyEqualAssign = static_cast<Shakara::AST::AssignmentNode*>(root[2]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(multiplyEqualAssign->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::IDENTIFIER),
+					static_cast<uint8_t>(multiplyEqualAssign->GetIdentifier()->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(multiplyEqualAssign->GetAssignment()->Type())
+				);
+
+				// Check if the binary operation is
+				// the correct sign
+				Shakara::AST::BinaryOperation* multiplyEqual = static_cast<Shakara::AST::BinaryOperation*>(multiplyEqualAssign->GetAssignment());
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::MULTIPLY),
+					static_cast<uint8_t>(multiplyEqual->Operation())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(multiplyEqual->GetRightHand()->Type())
+				);
+
+				// Finally check the divide equal expression
+				Shakara::AST::AssignmentNode* divideEqualAssign = static_cast<Shakara::AST::AssignmentNode*>(root[3]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(divideEqualAssign->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::IDENTIFIER),
+					static_cast<uint8_t>(divideEqualAssign->GetIdentifier()->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(divideEqualAssign->GetAssignment()->Type())
+				);
+
+				// Check if the binary operation is
+				// the correct sign
+				Shakara::AST::BinaryOperation* divideEqual = static_cast<Shakara::AST::BinaryOperation*>(divideEqualAssign->GetAssignment());
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::DIVIDE),
+					static_cast<uint8_t>(divideEqual->Operation())
 				);
 			}
 

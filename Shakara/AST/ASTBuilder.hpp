@@ -76,6 +76,20 @@ namespace Shakara
 			);
 
 			/**
+			 * Parse an arithmetic assignment to a
+			 * variable.
+			 *
+			 * By arithmetic, I mean operators like
+			 * += or -=.
+			 */
+			void _ParseVariableArithmeticAssignment(
+				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
 			 * Attempt to parse a function definition
 			 */
 			void _ParseFunctionDefinition(
