@@ -9,6 +9,13 @@ namespace Shakara
 		class IdentifierNode : public Node
 		{
 		public:
+			IdentifierNode() = default;
+
+			IdentifierNode(const IdentifierNode& identifier)
+			{
+				m_value = identifier.Value();
+			}
+
 			inline IdentifierNode& Value(const std::string& value)
 			{
 				m_value = value;

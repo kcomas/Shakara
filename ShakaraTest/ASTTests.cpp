@@ -324,6 +324,88 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(ASTBuildIncrementDecrement)
+			{
+				// Create a test increment decrement
+				// and insert it into a stringstream
+				std::string statement = R"(
+					test++
+					test--
+				)";
+
+				std::stringstream stream(statement, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be one child in
+				// the root node, the assignment node
+				Assert::AreEqual(
+					static_cast<size_t>(2),
+					static_cast<size_t>(root.Children())
+				);
+
+				// Now, recurse through and check each
+				// type and make sure they are all
+				// correct
+				Shakara::AST::AssignmentNode* incNode = static_cast<Shakara::AST::AssignmentNode*>(root[0]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(incNode->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::IDENTIFIER),
+					static_cast<uint8_t>(incNode->GetIdentifier()->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(incNode->GetAssignment()->Type())
+				);
+
+				// Check if the first node's binary operation is
+				// the correct sign
+				Shakara::AST::BinaryOperation* increment = static_cast<Shakara::AST::BinaryOperation*>(incNode->GetAssignment());
+			
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ADD),
+					static_cast<uint8_t>(increment->Operation())
+				);
+
+				// Do the same for the second root node
+				Shakara::AST::AssignmentNode* decNode = static_cast<Shakara::AST::AssignmentNode*>(root[1]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(decNode->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::IDENTIFIER),
+					static_cast<uint8_t>(decNode->GetIdentifier()->Type())
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(decNode->GetAssignment()->Type())
+				);
+
+				// Check if the first node's binary operation is
+				// the correct sign
+				Shakara::AST::BinaryOperation* decrement = static_cast<Shakara::AST::BinaryOperation*>(decNode->GetAssignment());
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::SUBTRACT),
+					static_cast<uint8_t>(decrement->Operation())
+				);
+			}
+
 		};
 	}
 }

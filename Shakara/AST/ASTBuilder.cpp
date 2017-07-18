@@ -54,6 +54,19 @@ void ASTBuilder::Build(
 					&next
 				);
 		}
+		// For either increment or decrement variables
+		else if (
+			tokens[index + 1].type == TokenType::INCREMENT ||
+			tokens[index + 1].type == TokenType::DECREMENT
+		)
+		{
+			_ParseVariableIncrementDecrement(
+				root,
+				tokens,
+				index,
+				&next
+			);
+		}
 	}
 
 	// We still have more portions of the AST to build
@@ -151,6 +164,83 @@ void ASTBuilder::_ParseVariableAssignment(
 
 		(*next)++;
 	}
+
+	root->Insert(assignment);
+}
+
+void ASTBuilder::_ParseVariableIncrementDecrement(
+	RootNode*           root,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
+	// Create an assignment node to increment
+	// the variable
+	//
+	// Technically I could create an increment
+	// or deincrement node, but it seems nicer
+	// to me to just implement it as an assignment
+	// to a binary operation
+	AssignmentNode* assignment = new AssignmentNode();
+	assignment->Type(NodeType::ASSIGN);
+
+	// Create the IdentifierNode to assign the
+	// increment or deincrement to
+	IdentifierNode* identifier = new IdentifierNode();
+	identifier->Type(NodeType::IDENTIFIER);
+
+	identifier->Value(tokens[(*next)].value);
+
+	identifier->Parent(assignment);
+
+	assignment->Identifier(identifier);
+
+	(*next)++;
+
+	// Create the binary operation for this
+	// operation
+	BinaryOperation* operation = new BinaryOperation();
+	operation->Type(NodeType::BINARY_OP);
+
+	// Create the left hand side of the operation
+	// with a copy of the current identifier
+	//
+	// This is kind of a hacky workaround, as each
+	// node recursively deletes, and will try to
+	// double delete if I use the same identifier
+	// instance
+	operation->LeftHand(new IdentifierNode(*identifier));
+
+	// Figure out if this is a increment or
+	// a decrement so that I can assign a
+	// correct binary operation
+	if (tokens[*next].type == TokenType::INCREMENT)
+		operation->Operation(NodeType::ADD);
+	else if(tokens[*next].type == TokenType::DECREMENT)
+		operation->Operation(NodeType::SUBTRACT);
+
+	// Move on for the next call
+	(*next)++;
+
+	// TODO: Throw an error if the type is incorrect
+
+	// Create the right hand of the binary operation
+	//
+	// Initialize this to one as we are only incrementing
+	// or decrementing by one
+	IntegerNode* one = new IntegerNode();
+	one->Value(false, 1);
+
+	operation->RightHand(one);
+
+	operation->Parent(assignment);
+
+	assignment->Assignment(operation);
 
 	root->Insert(assignment);
 }

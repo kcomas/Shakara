@@ -49,6 +49,17 @@ namespace Shakara
 			);
 
 			/**
+			 * Parse an increment or decrement
+			 * assignment to a variable.
+			 */
+			void _ParseVariableIncrementDecrement(
+				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
 			 * Attempt to parse a function definition
 			 */
 			void _ParseFunctionDefinition(
