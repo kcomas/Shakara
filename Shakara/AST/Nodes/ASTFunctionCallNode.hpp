@@ -6,10 +6,10 @@ namespace Shakara
 {
 	namespace AST
 	{
-		class FunctionDeclaration : public Node
+		class FunctionCall : public Node
 		{
 		public:
-			~FunctionDeclaration()
+			~FunctionCall()
 			{
 				delete m_identifier;
 
@@ -17,31 +17,20 @@ namespace Shakara
 					delete m_arguments[index];
 
 				m_arguments.clear();
-
-				delete m_body;
 			}
 
-			inline FunctionDeclaration& Identifier(Node* node)
+			inline FunctionCall& Identifier(Node* node)
 			{
 				m_identifier = node;
 
 				return *this;
 			}
 
-			inline FunctionDeclaration& InsertArgument(Node* node)
+			inline FunctionCall& InsertArgument(Node* node)
 			{
 				node->Parent(this);
 
 				m_arguments.push_back(node);
-
-				return *this;
-			}
-
-			inline FunctionDeclaration& Body(Node* node)
-			{
-				node->Parent(this);
-
-				m_body = node;
 
 				return *this;
 			}
@@ -56,17 +45,10 @@ namespace Shakara
 				return m_arguments;
 			}
 
-			inline Node* Body()
-			{
-				return m_body;
-			}
-
 		private:
 			Node*              m_identifier = nullptr;
 
 			std::vector<Node*> m_arguments;
-
-			Node*              m_body       = nullptr;
 
 		};
 	}

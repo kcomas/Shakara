@@ -9,6 +9,7 @@
 #include "Nodes/ASTIdentifierNode.hpp"
 #include "Nodes/ASTRootNode.hpp"
 #include "Nodes/ASTFunctionDeclarationNode.hpp"
+#include "Nodes/ASTFunctionCallNode.hpp"
 
 #include "../Tokenizer/TokenizerTypes.hpp"
 
@@ -131,6 +132,18 @@ bool ASTBuilder::_BuildIndividualNode(
 
 			return true;
 		}
+		// Check if this could be a function call
+		else if (tokens[index + 1].type == TokenType::BEGIN_ARGS)
+		{
+			_ParseFunctionCall(
+				root,
+				tokens,
+				index,
+				next
+			);
+
+			return true;
+		}
 	}
 
 	return false;
@@ -214,6 +227,102 @@ void ASTBuilder::_ParseVariableAssignment(
 	}
 
 	root->Insert(assignment);
+}
+
+void ASTBuilder::_ParseFunctionCall(
+	RootNode*           root,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*			next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
+	// Create the function call node for
+	// addition to the AST
+	FunctionCall* call = new FunctionCall();
+	call->Type(NodeType::CALL);
+
+	// Set the identifier as the first token
+	// at the passed in index
+	IdentifierNode* identifier = new IdentifierNode();
+	identifier->Type(NodeType::IDENTIFIER);
+
+	identifier->Value(tokens[(*next)].value);
+
+	identifier->Parent(call);
+
+	call->Identifier(identifier);
+
+	// We know that there's a begin args
+	// after this identifier, so just
+	// run next twice to skip it
+	(*next)++;
+	(*next)++;
+
+	// Now, we have a while loop to try
+	// and grab each argument inside of
+	// the call
+	while (static_cast<size_t>((*next)) < tokens.size())
+	{
+		if (tokens[*next].type == TokenType::END_ARGS)
+		{
+			(*next)++;
+
+			break;
+		}
+
+		// Do roughly the same thing we've been doing
+		// for anything that could have a binary operation
+		// or just a regular identifier/number
+		// Now for the harder part, assignment
+		// can contain any number of operations
+		// or a lack of an operation, we must
+		// lookahead to find if this is a simple
+		// one value assignment or a operation
+		if (
+			static_cast<size_t>((*next) + 1) < tokens.size() &&
+			IsArithmeticType(tokens[(*next) + 1].type)
+		)
+		{
+			BinaryOperation* operation = new BinaryOperation();
+			operation->Type(NodeType::BINARY_OP);
+
+			_ParseBinaryOperation(
+				operation,
+				tokens,
+				*next,
+				next
+			);
+
+			call->InsertArgument(operation);
+
+			continue;
+		}
+		// There is no other nested operation to do,
+		// now check if this type is a identifier or
+		// a number of sorts
+		else if (
+			tokens[*next].type == TokenType::IDENTIFIER ||
+			tokens[*next].type == TokenType::INTEGER ||
+			tokens[*next].type == TokenType::DECIMAL
+		)
+		{
+			Node* value = nullptr;
+			_CreateSingleNodeFromToken(
+				&value,
+				tokens[(*next)]
+			);
+
+			call->InsertArgument(value);
+		}
+
+		(*next)++;
+	}
+
+	root->Insert(call);
 }
 
 void ASTBuilder::_ParseVariableIncrementDecrement(
@@ -453,7 +562,11 @@ void ASTBuilder::_ParseFunctionDefinition(
 	while (static_cast<size_t>((*next)) < tokens.size())
 	{
 		if (tokens[*next].type == TokenType::END_ARGS)
+		{
+			(*next)++;
+
 			break;
+		}
 
 		if (tokens[*next].type != TokenType::IDENTIFIER)
 		{

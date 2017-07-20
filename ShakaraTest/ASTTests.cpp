@@ -241,7 +241,7 @@ namespace ShakaraTest
 				// it into a stringstream
 				std::string code = R"(
 					count    = 1
-					argument = 2 * 2
+					argument = 2 * 2 * 2
 					
 					add_to_counter = (value, other)
 					{
@@ -266,8 +266,8 @@ namespace ShakaraTest
 				Shakara::AST::ASTBuilder builder;
 				builder.Build(&root, tokens);
 
-				// There should only be one child in
-				// the root node, the assignment node
+				// There should be four children corresponding
+				// to each declaration in the root
 				Assert::AreEqual(
 					static_cast<size_t>(4),
 					static_cast<size_t>(root.Children())
@@ -544,6 +544,71 @@ namespace ShakaraTest
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::AST::NodeType::DIVIDE),
 					static_cast<uint8_t>(divideEqual->Operation())
+				);
+			}
+
+			TEST_METHOD(ASTBuildFunctionCall)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					add_to_counter = (value)
+					{
+						count += value
+					}
+
+					add_to_counter(2 * 2 * 2)
+
+					test = 2 * 2
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be one child in
+				// the root node, the assignment node
+				Assert::AreEqual(
+					static_cast<size_t>(3),
+					static_cast<size_t>(root.Children())
+				);
+
+				// Check if the first child is a function
+				// declaration node
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::FUNCTION),
+					static_cast<uint8_t>(root[0]->Type())
+				);
+				
+				// Now check if the next root is a function
+				// call node
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::CALL),
+					static_cast<uint8_t>(root[1]->Type())
+				);
+
+				// Now, check the call node to see if the sole
+				// argument is an integer
+				Shakara::AST::FunctionCall* call = static_cast<Shakara::AST::FunctionCall*>(root[1]);
+
+				// Make sure we have the correct number of arguments
+				Assert::AreEqual(
+					static_cast<size_t>(1),
+					static_cast<size_t>(call->Arguments().size())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(call->Arguments()[0]->Type())
 				);
 			}
 

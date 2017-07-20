@@ -65,6 +65,17 @@ namespace Shakara
 			);
 
 			/**
+			 * Attempt to parse a function call
+			 * into a corresponding node.
+			 */
+			void _ParseFunctionCall(
+				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
 			 * Parse an increment or decrement
 			 * assignment to a variable.
 			 */
