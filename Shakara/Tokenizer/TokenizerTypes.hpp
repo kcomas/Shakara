@@ -44,6 +44,11 @@ namespace Shakara
 		MULTIPLY_EQUAL = 0x13,
 		DIVIDE_EQUAL   = 0x14,
 		COMPARISON     = 0x15,
+
+		/**
+		 * Special Tokens (print, etc)
+		 */
+		PRINT          = 0x16
 	};
 
 	struct Token

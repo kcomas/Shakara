@@ -63,7 +63,11 @@ TokenizeError Tokenizer::Tokenize(
 		// If we hit a backslash and we are parsing a string
 		// and we aren't supposed to escape it, set the flag
 		// and continue;
-		if (current == '\\' && parsingString && !escapeNext)
+		if (
+			current == '\\' &&
+			parsingString &&
+			!escapeNext
+		)
 		{
 			escapeNext = true;
 
@@ -79,7 +83,11 @@ TokenizeError Tokenizer::Tokenize(
 
 			continue;
 		}
-		else if (current == '"' && parsingString && !escapeNext)
+		else if (
+			current == '"' &&
+			parsingString  &&
+			!escapeNext
+		)
 		{
 			parsingString = false;
 
@@ -99,7 +107,7 @@ TokenizeError Tokenizer::Tokenize(
 		// Try and tokenize a single
 		// single character token like
 		// the beginning of a block
-		if (_IsSingleCharacterToken(current) && !escapeNext)
+		if (_IsSingleCharacterToken(current) && !parsingString)
 		{
 			// If we don't have an empty value
 			// push the last value as a token
@@ -292,6 +300,12 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 			return true;
 		default: break;
 		}
+	}
+
+	if (value == "print")
+	{
+		*type = TokenType::PRINT;
+		return true;
 	}
 
 	// Next, try and parse either an integer,
