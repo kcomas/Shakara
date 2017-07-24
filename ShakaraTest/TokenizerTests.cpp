@@ -361,6 +361,94 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(TokenizeSimpleString)
+			{
+				std::string statement = "name = \"Shakara\"";
+
+				std::stringstream stream(statement, std::ios::in);
+
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Make sure that we have three tokens
+				// for this test statement
+				Assert::AreEqual(static_cast<size_t>(3), tokens.size());
+
+				// Next, make sure that each token is
+				// the right type
+				//
+				// The order should be, identifier,
+				// equals, string
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[0].type),
+					L"Incorrect type! Expected an IDENTIFIER type."
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::EQUAL),
+					static_cast<uint8_t>(tokens[1].type),
+					L"Incorrect Type! Expected an EQUAL type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::STRING),
+					static_cast<uint8_t>(tokens[2].type),
+					L"Incorrect type! Expected an STRING type"
+				);
+
+				// The string token's value should be Shakara
+				Assert::AreEqual(
+					"Shakara",
+					tokens[2].value.c_str(),
+					L"Incorrect value! Should be \"Shakara\""
+				);
+			}
+
+			TEST_METHOD(TokenizeEscapedString)
+			{
+				std::string statement = R"(name = "Shakara \"Language\"")";
+
+				std::stringstream stream(statement, std::ios::in);
+
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Make sure that we have three tokens
+				// for this test statement
+				Assert::AreEqual(static_cast<size_t>(3), tokens.size());
+
+				// Next, make sure that each token is
+				// the right type
+				//
+				// The order should be, identifier,
+				// equals, string
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[0].type),
+					L"Incorrect type! Expected an IDENTIFIER type."
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::EQUAL),
+					static_cast<uint8_t>(tokens[1].type),
+					L"Incorrect Type! Expected an EQUAL type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::STRING),
+					static_cast<uint8_t>(tokens[2].type),
+					L"Incorrect type! Expected an STRING type"
+				);
+
+				// The string token's value should be Shakara
+				Assert::AreEqual(
+					"Shakara \"Language\"",
+					tokens[2].value.c_str(),
+					LR"(Incorrect value! Should be "Shakara \"Language\""!)"
+				);
+			}
+
 		};
 	}
 }

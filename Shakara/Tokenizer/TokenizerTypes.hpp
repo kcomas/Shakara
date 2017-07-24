@@ -32,17 +32,18 @@ namespace Shakara
 		 */
 		INTEGER        = 0x0C,
 		DECIMAL        = 0x0D,
+		STRING         = 0x0E,
 
 		/**
 		 * Urary Tokens
 		 */
-		INCREMENT      = 0x0E,
-		DECREMENT      = 0x0F,
-		PLUS_EQUAL     = 0x10,
-		MINUS_EQUAL    = 0x11,
-		MULTIPLY_EQUAL = 0x12,
-		DIVIDE_EQUAL   = 0x13,
-		COMPARISON     = 0x14,
+		INCREMENT      = 0x0F,
+		DECREMENT      = 0x10,
+		PLUS_EQUAL     = 0x11,
+		MINUS_EQUAL    = 0x12,
+		MULTIPLY_EQUAL = 0x13,
+		DIVIDE_EQUAL   = 0x14,
+		COMPARISON     = 0x15,
 	};
 
 	struct Token

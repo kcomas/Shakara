@@ -19,6 +19,15 @@ TokenizeError Tokenizer::Tokenize(
 	char        current = '\0';
 	char        last    = '\0';
 
+	// Whether or not we came upon a quote
+	// and are parsing a string
+	bool parsingString = false;
+
+	// Whether or not we came upon a backslash
+	// if so, set this so that the following
+	// character will be escaped
+	bool escapeNext = false;
+
 	// Read through each character in the
 	// file stream
 	while (stream.get(current))
@@ -27,10 +36,11 @@ TokenizeError Tokenizer::Tokenize(
 		// trying to get a token type from
 		// the value currently in place
 		if (
-			current == ' '    ||
+			!parsingString &&
+			(current == ' '    ||
 			current == '\n'   ||
 			current == '\r\n' ||
-			current == '\t'
+			current == '\t')
 		)
 		{
 			// We have nothing to tokenize!
@@ -50,10 +60,46 @@ TokenizeError Tokenizer::Tokenize(
 			continue;
 		}
 
+		// If we hit a backslash and we are parsing a string
+		// and we aren't supposed to escape it, set the flag
+		// and continue;
+		if (current == '\\' && parsingString && !escapeNext)
+		{
+			escapeNext = true;
+
+			continue;
+		}
+
+		// If we hit a quote and we aren't parsing
+		// a string already, start parsing, otherwise
+		// stop parsing a string and add it as a token
+		if (current == '"' && !parsingString)
+		{
+			parsingString = true;
+
+			continue;
+		}
+		else if (current == '"' && parsingString && !escapeNext)
+		{
+			parsingString = false;
+
+			Token token;
+			token.type  = TokenType::STRING;
+			token.value = value;
+
+			tokens.push_back(token);
+
+			value.clear();
+
+			last = current;
+
+			continue;
+		}
+
 		// Try and tokenize a single
 		// single character token like
 		// the beginning of a block
-		if (_IsSingleCharacterToken(current))
+		if (_IsSingleCharacterToken(current) && !escapeNext)
 		{
 			// If we don't have an empty value
 			// push the last value as a token
@@ -89,6 +135,9 @@ TokenizeError Tokenizer::Tokenize(
 		last = current;
 
 		value.push_back(current);
+
+		if (escapeNext)
+			escapeNext = false;
 	}
 
 	// If there is still a value to tokenize, do it
