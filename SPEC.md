@@ -111,3 +111,18 @@ determined, it will print the current type of the variable.
 
 Print automatically appends a newline at the end of the statement,
 so there is no need to use one.
+
+### Return
+
+Returning can be used within a method to, of course, return some
+kind of value.
+
+Return is roughly the same as languages like C/C++ or even Python.
+The code for using a return is like below
+
+    counter = (count)
+    {
+        return count + 1
+    }
+
+Return cannot be used outside of a function.
