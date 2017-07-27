@@ -488,6 +488,45 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(TokenizeReturnString)
+			{
+				std::string statement = R"(return "Returned value")";
+
+				std::stringstream stream(statement, std::ios::in);
+
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Make sure that we have three tokens
+				// for this test statement
+				Assert::AreEqual(static_cast<size_t>(2), tokens.size());
+
+				// Next, make sure that each token is
+				// the right type
+				//
+				// The order should be return and then
+				// a string
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::RETURN),
+					static_cast<uint8_t>(tokens[0].type),
+					L"Incorrect type! Expected an PRINT type."
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::STRING),
+					static_cast<uint8_t>(tokens[1].type),
+					L"Incorrect Type! Expected an STRING type!"
+				);
+
+				// The string token's value should be Shakara
+				Assert::AreEqual(
+					"Returned value",
+					tokens[1].value.c_str(),
+					LR"(Incorrect value! Should be "Returned value"!)"
+				);
+			}
+
 		};
 	}
 }

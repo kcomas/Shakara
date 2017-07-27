@@ -48,7 +48,8 @@ namespace Shakara
 		/**
 		 * Special Tokens (print, etc)
 		 */
-		PRINT          = 0x16
+		PRINT          = 0x16,
+		RETURN         = 0x17
 	};
 
 	struct Token

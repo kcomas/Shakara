@@ -18,3 +18,5 @@
 #include "../Shakara/AST/Nodes/ASTBinaryOperation.hpp"
 #include "../Shakara/AST/Nodes/ASTFunctionDeclarationNode.hpp"
 #include "../Shakara/AST/Nodes/ASTFunctionCallNode.hpp"
+#include "../Shakara/AST/Nodes/ASTStringNode.hpp"
+#include "../Shakara/AST/Nodes/ASTDecimalNode.hpp"

@@ -19,6 +19,35 @@ terminator for statements in Shakara, just finish a
 statement and make a newline, or a space, and volia,
 new statement.
 
+### Integers
+
+Integers are by default 32-bit, and are specified with just
+a single number without a decimal point anywhere.
+
+### Decimals
+
+Decimals in Shakara are a floating point number, defined by
+specifying any number with a decimal point.
+
+### Strings
+
+Strings in Shakara are specified by wrapping characters in two
+double quotes.
+
+###### Escape Sequences
+
+Shakara strings, like many other languages, support escape sequences
+to use characters that could be seen by the parser, or otherwise would
+be parsed.
+
+The ones supported are in the table below.
+
+| Sequence  |  Result      |
+| --------- | ------------ |
+| \\n       | newline      |
+| \\\       | backslash    |
+| \\"       | double quote |
+
 ### Arithmetic
 
 Shakara does arithmetic expressions in the most
@@ -65,3 +94,20 @@ Then, after being defined, to call a function, use the line
 below:
 
     <function_name>(<args>)
+
+### Printing
+
+Printing is a built in call in the language, no imports required
+or anything of the sort.
+
+Print statements follow the style of a function call, usage would
+be like the code below:
+
+    print(type, other_type)
+
+Print supports as many arguments as you need, and these arguments
+will either be printed by their value, or if their value cannot be
+determined, it will print the current type of the variable.
+
+Print automatically appends a newline at the end of the statement,
+so there is no need to use one.

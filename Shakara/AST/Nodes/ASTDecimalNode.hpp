@@ -6,25 +6,25 @@ namespace Shakara
 {
 	namespace AST
 	{
-		class IntegerNode : public Node
+		class DecimalNode : public Node
 		{
 		public:
-			inline IntegerNode& Value(bool negate, int32_t value)
+			inline DecimalNode& Value(bool negate, float value)
 			{
 				m_value = ((negate) ? -value : value);
 
 				return *this;
 			}
 
-			inline int32_t Value() const
+			inline float Value() const
 			{
 				return m_value;
 			}
 
 		private:
-			bool negative   = false;
+			bool negative = false;
 
-			int32_t m_value = 0;
+			float m_value = 0;
 
 		};
 	}

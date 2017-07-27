@@ -10,6 +10,8 @@
 #include "Nodes/ASTRootNode.hpp"
 #include "Nodes/ASTFunctionDeclarationNode.hpp"
 #include "Nodes/ASTFunctionCallNode.hpp"
+#include "Nodes/ASTDecimalNode.hpp"
+#include "Nodes/ASTStringNode.hpp"
 
 #include "../Tokenizer/TokenizerTypes.hpp"
 
@@ -209,8 +211,9 @@ void ASTBuilder::_ParseVariableAssignment(
 	// a number of sorts
 	else if (
 		tokens[*next].type == TokenType::IDENTIFIER ||
-		tokens[*next].type == TokenType::INTEGER ||
-		tokens[*next].type == TokenType::DECIMAL
+		tokens[*next].type == TokenType::INTEGER    ||
+		tokens[*next].type == TokenType::DECIMAL    ||
+		tokens[*next].type == TokenType::STRING
 	)
 	{
 		Node* value = nullptr;
@@ -306,8 +309,9 @@ void ASTBuilder::_ParseFunctionCall(
 		// a number of sorts
 		else if (
 			tokens[*next].type == TokenType::IDENTIFIER ||
-			tokens[*next].type == TokenType::INTEGER ||
-			tokens[*next].type == TokenType::DECIMAL
+			tokens[*next].type == TokenType::INTEGER    ||
+			tokens[*next].type == TokenType::DECIMAL    ||
+			tokens[*next].type == TokenType::STRING
 		)
 		{
 			Node* value = nullptr;
@@ -495,8 +499,9 @@ void ASTBuilder::_ParseVariableArithmeticAssignment(
 	// a number of sorts
 	else if (
 		tokens[*next].type == TokenType::IDENTIFIER ||
-		tokens[*next].type == TokenType::INTEGER ||
-		tokens[*next].type == TokenType::DECIMAL
+		tokens[*next].type == TokenType::INTEGER    ||
+		tokens[*next].type == TokenType::DECIMAL    ||
+		tokens[*next].type == TokenType::STRING
 		)
 	{
 		Node* value = nullptr;
@@ -737,7 +742,24 @@ inline void ASTBuilder::_CreateSingleNodeFromToken(
 
 		break;
 	}
-	// TODO: Implement DECIMAL
+	case TokenType::DECIMAL:
+	{
+		*node = new DecimalNode();
+		static_cast<DecimalNode*>(*node)->Value(false, static_cast<float>(std::stof(token.value)));
+
+		(*node)->Type(NodeType::DECIMAL);
+
+		break;
+	}
+	case TokenType::STRING:
+	{
+		*node = new StringNode();
+		static_cast<StringNode*>(*node)->Value(token.value);
+
+		(*node)->Type(NodeType::STRING);
+
+		break;
+	}
 	default:
 		break;
 	}

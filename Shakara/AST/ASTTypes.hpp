@@ -19,15 +19,22 @@ namespace Shakara
 			INTEGER         = 0x05,
 			DECIMAL         = 0x06,
 			IDENTIFIER      = 0x07,
+			STRING          = 0x08,
 
 			/**
 			 * Arithmetic Types for
 			 * binary operations
 			 */
-			ADD             = 0x08,
-			SUBTRACT        = 0x09,
-			MULTIPLY        = 0x0A,
-			DIVIDE          = 0x0B,
+			ADD             = 0x09,
+			SUBTRACT        = 0x0A,
+			MULTIPLY        = 0x0B,
+			DIVIDE          = 0x0C,
+
+			/**
+			 * Special Node Types (print, etc)
+			 */
+			PRINT           = 0x0D,
+			RETURN          = 0x0E
 		};
 	}
 }

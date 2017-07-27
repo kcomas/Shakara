@@ -612,6 +612,87 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(ASTBuildStringAndDecimalAssignment)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					name  = "Shakara"
+					scale = 1.25
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be one child in
+				// the root node, the assignment node
+				Assert::AreEqual(
+					static_cast<size_t>(2),
+					static_cast<size_t>(root.Children())
+				);
+
+				// Check if the first child is an assignment
+				// node
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[0]->Type())
+				);
+
+				// Now check if the next root is also an assignment
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[1]->Type())
+				);
+
+				// Now check the assigment to see if the first
+				// is assigned to a string
+				Shakara::AST::AssignmentNode* nameAssign = static_cast<Shakara::AST::AssignmentNode*>(root[0]);
+
+				// Make sure that the assigned value is a string
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::STRING),
+					static_cast<uint8_t>(nameAssign->GetAssignment()->Type())
+				);
+
+				// Make sure it is the correct string as well
+				Shakara::AST::StringNode* nameString = static_cast<Shakara::AST::StringNode*>(nameAssign->GetAssignment());
+
+				Assert::AreEqual(
+					"Shakara",
+					nameString->Value().c_str()
+				);
+
+				// Now check the decimal assignment to see if the
+				// type is correct
+				// Now check the assigment to see if the first
+				// is assigned to a string
+				Shakara::AST::AssignmentNode* scaleAssign = static_cast<Shakara::AST::AssignmentNode*>(root[1]);
+
+				// Make sure that the assigned value is a string
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::DECIMAL),
+					static_cast<uint8_t>(scaleAssign->GetAssignment()->Type())
+				);
+
+				// Make sure it is the correct string as well
+				Shakara::AST::DecimalNode* scaleDecimal = static_cast<Shakara::AST::DecimalNode*>(scaleAssign->GetAssignment());
+
+				Assert::AreEqual(
+					1.25f,
+					scaleDecimal->Value()
+				);
+			}
+
 		};
 	}
 }

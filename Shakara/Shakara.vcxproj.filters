@@ -54,6 +54,12 @@
     <ClCompile Include="AST\Nodes\ASTFunctionCallNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AST\Nodes\ASTDecimalNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AST\Nodes\ASTStringNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.hpp">
@@ -93,6 +99,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AST\Nodes\ASTFunctionCallNode.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AST\Nodes\ASTDecimalNode.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AST\Nodes\ASTStringNode.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
