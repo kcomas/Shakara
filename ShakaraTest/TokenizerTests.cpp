@@ -451,7 +451,9 @@ namespace ShakaraTest
 
 			TEST_METHOD(TokenizePrintString)
 			{
-				std::string statement = R"(print "This is Shakara")";
+				std::string statement = R"(
+					print("This is Shakara")
+				)";
 
 				std::stringstream stream(statement, std::ios::in);
 
@@ -462,28 +464,38 @@ namespace ShakaraTest
 
 				// Make sure that we have three tokens
 				// for this test statement
-				Assert::AreEqual(static_cast<size_t>(2), tokens.size());
+				Assert::AreEqual(static_cast<size_t>(4), tokens.size());
 
 				// Next, make sure that each token is
 				// the right type
 				//
-				// The order should be print and then
-				// a string
+				// The order should be print, begin args
+				// string, and end args
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::PRINT),
 					static_cast<uint8_t>(tokens[0].type),
 					L"Incorrect type! Expected an PRINT type."
 				);
 				Assert::AreEqual(
-					static_cast<uint8_t>(Shakara::TokenType::STRING),
+					static_cast<uint8_t>(Shakara::TokenType::BEGIN_ARGS),
 					static_cast<uint8_t>(tokens[1].type),
+					L"Incorrect type! Expected an BEGIN_ARGS type."
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::STRING),
+					static_cast<uint8_t>(tokens[2].type),
 					L"Incorrect Type! Expected an STRING type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::END_ARGS),
+					static_cast<uint8_t>(tokens[3].type),
+					L"Incorrect Type! Expected an END_ARGS type!"
 				);
 
 				// The string token's value should be Shakara
 				Assert::AreEqual(
 					"This is Shakara",
-					tokens[1].value.c_str(),
+					tokens[2].value.c_str(),
 					LR"(Incorrect value! Should be "This is Shakara"!)"
 				);
 			}
