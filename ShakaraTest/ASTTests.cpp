@@ -575,8 +575,9 @@ namespace ShakaraTest
 				Shakara::AST::ASTBuilder builder;
 				builder.Build(&root, tokens);
 
-				// There should only be one child in
-				// the root node, the assignment node
+				// There should be three children in the root
+				// the function definition, the function call
+				// and the test assignment
 				Assert::AreEqual(
 					static_cast<size_t>(3),
 					static_cast<size_t>(root.Children())
@@ -634,8 +635,10 @@ namespace ShakaraTest
 				Shakara::AST::ASTBuilder builder;
 				builder.Build(&root, tokens);
 
-				// There should only be one child in
-				// the root node, the assignment node
+				// There should only be two children in
+				// the root node, the assignment node for
+				// the string and the assignment node for
+				// the decimal
 				Assert::AreEqual(
 					static_cast<size_t>(2),
 					static_cast<size_t>(root.Children())
@@ -690,6 +693,108 @@ namespace ShakaraTest
 				Assert::AreEqual(
 					1.25f,
 					scaleDecimal->Value()
+				);
+			}
+
+			TEST_METHOD(ASTBuildPrintStatement)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					name = "Shakara"
+					
+					print(name)
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be two children in
+				// the root node, the assignment node and
+				// the print call
+				Assert::AreEqual(
+					static_cast<size_t>(2),
+					static_cast<size_t>(root.Children())
+				);
+
+				// Check if the first node is an assignment
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[0]->Type()),
+					L"Expected ASSIGN!"
+				);
+
+				// Next check if the second node is a function
+				// call and then check the flags to see if its
+				// a special print
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::CALL),
+					static_cast<uint8_t>(root[1]->Type()),
+					L"Expected CALL!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::CallFlags::PRINT),
+					static_cast<uint8_t>(static_cast<Shakara::AST::FunctionCall*>(root[1])->Flags()),
+					L"Expected a special PRINT flag on this call!"
+				);
+			}
+
+			TEST_METHOD(ASTBuildReturnStatement)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					greet = (name)
+					{
+						return "Hello, " + name + "!"
+					}
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be one child in
+				// the root node, the definition node
+				Assert::AreEqual(
+					static_cast<size_t>(1),
+					static_cast<size_t>(root.Children())
+				);
+
+				// Check if the first child is a function
+				// declaration node
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::FUNCTION),
+					static_cast<uint8_t>(root[0]->Type())
+				);
+
+				// Now, check if the child node is a return
+				// node
+				Shakara::AST::RootNode* funcBody = static_cast<Shakara::AST::RootNode*>(static_cast<Shakara::AST::FunctionDeclaration*>(root[0])->Body());
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::RETURN),
+					static_cast<uint8_t>((*funcBody)[0]->Type())
 				);
 			}
 

@@ -60,6 +60,9 @@
     <ClCompile Include="AST\Nodes\ASTStringNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AST\Nodes\ASTReturnNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.hpp">
@@ -105,6 +108,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AST\Nodes\ASTStringNode.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AST\Nodes\ASTReturnNode.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

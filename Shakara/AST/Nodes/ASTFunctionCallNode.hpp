@@ -6,6 +6,11 @@ namespace Shakara
 {
 	namespace AST
 	{
+		enum class CallFlags : uint8_t {
+			NONE  = 0x00,
+			PRINT = 0x01
+		};
+
 		class FunctionCall : public Node
 		{
 		public:
@@ -35,6 +40,16 @@ namespace Shakara
 				return *this;
 			}
 
+			inline void SetFlags(const CallFlags& flags)
+			{
+				m_flags = flags;
+			}
+
+			inline CallFlags Flags()
+			{
+				return m_flags;
+			}
+
 			inline Node* Identifier()
 			{
 				return m_identifier;
@@ -49,6 +64,8 @@ namespace Shakara
 			Node*              m_identifier = nullptr;
 
 			std::vector<Node*> m_arguments;
+
+			CallFlags          m_flags      = CallFlags::NONE;
 
 		};
 	}

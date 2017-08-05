@@ -65,6 +65,20 @@ namespace Shakara
 			);
 
 			/**
+			 * Attempt to parse a return statement to
+			 * the AST.
+			 *
+			 * In the interpreter, it will be made sure
+			 * that this isn't called outside of a function.
+			 */
+			void _ParseReturnStatement(
+				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
 			 * Attempt to parse a function call
 			 * into a corresponding node.
 			 */
@@ -105,6 +119,19 @@ namespace Shakara
 			 */
 			void _ParseFunctionDefinition(
 				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
+			 * Checks the token after the current index
+			 * to see if it is a binary operation
+			 *
+			 * If it is, a BinaryOperation node is returned
+			 * otherwise, a single typed node is returned
+			 */
+			Node* _GetBinaryOpOrSingleNode(
 				std::vector<Token>& tokens,
 				size_t              index,
 				ptrdiff_t*          next

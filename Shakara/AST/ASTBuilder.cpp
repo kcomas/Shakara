@@ -12,6 +12,7 @@
 #include "Nodes/ASTFunctionCallNode.hpp"
 #include "Nodes/ASTDecimalNode.hpp"
 #include "Nodes/ASTStringNode.hpp"
+#include "Nodes/ASTReturnNode.hpp"
 
 #include "../Tokenizer/TokenizerTypes.hpp"
 
@@ -147,6 +148,34 @@ bool ASTBuilder::_BuildIndividualNode(
 			return true;
 		}
 	}
+	// Parse this print call as a function call
+	else if (
+		tokens.size() >= 2 &&
+		tokens[index].type == TokenType::PRINT &&
+		tokens[index + 1].type == TokenType::BEGIN_ARGS
+	)
+	{
+		_ParseFunctionCall(
+			root,
+			tokens,
+			index,
+			next
+		);
+
+		return true;
+	}
+	// Parse a return statement
+	else if (tokens[index].type == TokenType::RETURN)
+	{
+		_ParseReturnStatement(
+			root,
+			tokens,
+			index,
+			next
+		);
+
+		return true;
+	}
 
 	return false;
 }
@@ -185,51 +214,48 @@ void ASTBuilder::_ParseVariableAssignment(
 	// know that this is an assignment
 	(*next)++;
 
-	// Now for the harder part, assignment
-	// can contain any number of operations
-	// or a lack of an operation, we must
-	// lookahead to find if this is a simple
-	// one value assignment or a operation
-	if (static_cast<size_t>((*next) + 1) < tokens.size() && IsArithmeticType(tokens[(*next) + 1].type))
-	{
-		BinaryOperation* operation = new BinaryOperation();
-		operation->Type(NodeType::BINARY_OP);
+	Node* value = _GetBinaryOpOrSingleNode(
+		tokens,
+		*next,
+		next
+	);
 
-		_ParseBinaryOperation(
-			operation,
-			tokens,
-			*next,
-			next
-		);
-
-		operation->Parent(assignment);
-
-		assignment->Assignment(operation);
-	}
-	// There is no other nested operation to do,
-	// now check if this type is a identifier or
-	// a number of sorts
-	else if (
-		tokens[*next].type == TokenType::IDENTIFIER ||
-		tokens[*next].type == TokenType::INTEGER    ||
-		tokens[*next].type == TokenType::DECIMAL    ||
-		tokens[*next].type == TokenType::STRING
-	)
-	{
-		Node* value = nullptr;
-		_CreateSingleNodeFromToken(
-			&value,
-			tokens[(*next)]
-		);
-
-		value->Parent(assignment);
-
-		assignment->Assignment(value);
-
-		(*next)++;
-	}
+	value->Parent(assignment);
+	assignment->Assignment(value);
 
 	root->Insert(assignment);
+}
+
+void ASTBuilder::_ParseReturnStatement(
+	RootNode*           root,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*			next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
+	// Create the assignment node to be
+	// added to the AST
+	ReturnNode* retStatement = new ReturnNode();
+	retStatement->Type(NodeType::RETURN);
+
+	// Move on to the data that is going to
+	// be returned
+	(*next)++;
+
+	Node* value = _GetBinaryOpOrSingleNode(
+		tokens,
+		*next,
+		next
+	);
+
+	value->Parent(retStatement);
+	retStatement->Returned(value);
+
+	root->Insert(retStatement);
 }
 
 void ASTBuilder::_ParseFunctionCall(
@@ -259,6 +285,9 @@ void ASTBuilder::_ParseFunctionCall(
 
 	call->Identifier(identifier);
 
+	if (tokens[(*next)].type == TokenType::PRINT)
+		call->SetFlags(CallFlags::PRINT);
+
 	// We know that there's a begin args
 	// after this identifier, so just
 	// run next twice to skip it
@@ -277,53 +306,20 @@ void ASTBuilder::_ParseFunctionCall(
 			break;
 		}
 
-		// Do roughly the same thing we've been doing
-		// for anything that could have a binary operation
-		// or just a regular identifier/number
-		// Now for the harder part, assignment
-		// can contain any number of operations
-		// or a lack of an operation, we must
-		// lookahead to find if this is a simple
-		// one value assignment or a operation
-		if (
-			static_cast<size_t>((*next) + 1) < tokens.size() &&
-			IsArithmeticType(tokens[(*next) + 1].type)
-		)
-		{
-			BinaryOperation* operation = new BinaryOperation();
-			operation->Type(NodeType::BINARY_OP);
+		Node* value = _GetBinaryOpOrSingleNode(
+			tokens,
+			*next,
+			next
+		);
 
-			_ParseBinaryOperation(
-				operation,
-				tokens,
-				*next,
-				next
-			);
+		value->Parent(call);
+		call->InsertArgument(value);
 
-			call->InsertArgument(operation);
-
-			continue;
-		}
-		// There is no other nested operation to do,
-		// now check if this type is a identifier or
-		// a number of sorts
-		else if (
-			tokens[*next].type == TokenType::IDENTIFIER ||
-			tokens[*next].type == TokenType::INTEGER    ||
-			tokens[*next].type == TokenType::DECIMAL    ||
-			tokens[*next].type == TokenType::STRING
-		)
-		{
-			Node* value = nullptr;
-			_CreateSingleNodeFromToken(
-				&value,
-				tokens[(*next)]
-			);
-
-			call->InsertArgument(value);
-		}
-
-		(*next)++;
+		// ParseBinaryOperation automatically increments
+		// next, thus, only increment if we don't use a
+		// binary operation
+		if (value->Type() != NodeType::BINARY_OP)
+			(*next)++;
 	}
 
 	root->Insert(call);
@@ -470,52 +466,13 @@ void ASTBuilder::_ParseVariableArithmeticAssignment(
 
 	// TODO: Throw an error if the type is incorrect
 
-	// Now to parse what to insert into the right hand
-	// side of the binary operation.
-	//
-	// This could be another binary operation or just
-	// a number of some type.
-	//
-	// This code is almost identical to the code used for
-	// parsing a regular variable assignment.
-	if (static_cast<size_t>((*next) + 1) < tokens.size() && IsArithmeticType(tokens[(*next) + 1].type))
-	{
-		BinaryOperation* nestedOp = new BinaryOperation();
-		nestedOp->Type(NodeType::BINARY_OP);
-
-		_ParseBinaryOperation(
-			nestedOp,
-			tokens,
-			*next,
-			next
-		);
-
-		nestedOp->Parent(operation);
-	
-		operation->RightHand(nestedOp);
-	}
-	// There is no other nested operation to do,
-	// now check if this type is a identifier or
-	// a number of sorts
-	else if (
-		tokens[*next].type == TokenType::IDENTIFIER ||
-		tokens[*next].type == TokenType::INTEGER    ||
-		tokens[*next].type == TokenType::DECIMAL    ||
-		tokens[*next].type == TokenType::STRING
-		)
-	{
-		Node* value = nullptr;
-		_CreateSingleNodeFromToken(
-			&value,
-			tokens[(*next)]
-		);
-
-		value->Parent(operation);
-
-		operation->RightHand(value);
-
-		(*next)++;
-	}
+	Node* value = _GetBinaryOpOrSingleNode(
+		tokens,
+		*next,
+		next
+	);
+	value->Parent(operation);
+	operation->RightHand(value);
 
 	assignment->Assignment(operation);
 
@@ -627,6 +584,61 @@ void ASTBuilder::_ParseFunctionDefinition(
 	root->Insert(declaration);
 }
 
+Node* ASTBuilder::_GetBinaryOpOrSingleNode(
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+	
+	// Start off by checking if there is a binary operation
+	//
+	// Check if there is a token after the current token, and
+	// check if it is a arithmetic type.
+	//
+	// If it is, build a BinaryOperation, otherwise, get the
+	// single typed node.
+	if (static_cast<size_t>((*next) + 1) < tokens.size() && IsArithmeticType(tokens[(*next) + 1].type))
+	{
+		BinaryOperation* operation = new BinaryOperation();
+		operation->Type(NodeType::BINARY_OP);
+
+		_ParseBinaryOperation(
+			operation,
+			tokens,
+			*next,
+			next
+		);
+
+		return operation;
+	}
+	// There is no other nested operation to do,
+	// now check if this type is a identifier or
+	// a number of sorts
+	else if (
+		tokens[*next].type == TokenType::IDENTIFIER ||
+		tokens[*next].type == TokenType::INTEGER ||
+		tokens[*next].type == TokenType::DECIMAL ||
+		tokens[*next].type == TokenType::STRING
+		)
+	{
+		Node* value = nullptr;
+		_CreateSingleNodeFromToken(
+			&value,
+			tokens[(*next)]
+		);
+
+		(*next)++;
+	
+		return value;
+	}
+
+	return nullptr;
+}
+
 void ASTBuilder::_ParseBinaryOperation(
 	BinaryOperation*    operation,
 	std::vector<Token>& tokens,
@@ -684,7 +696,7 @@ void ASTBuilder::_ParseBinaryOperation(
 	// another single node
 	//
 	// Otherwise, recursively run this function
-	if (static_cast<size_t>((*next) + 1) < tokens.size() && IsArithmeticType(tokens[(*next) + 1].type))
+	/*if (static_cast<size_t>((*next) + 1) < tokens.size() && IsArithmeticType(tokens[(*next) + 1].type))
 	{
 		BinaryOperation* nestedOp = new BinaryOperation();
 		nestedOp->Type(NodeType::BINARY_OP);
@@ -714,7 +726,16 @@ void ASTBuilder::_ParseBinaryOperation(
 		operation->RightHand(rightHand);
 
 		(*next)++;
-	}
+	}*/
+
+	Node* value = _GetBinaryOpOrSingleNode(
+		tokens,
+		*next,
+		next
+	);
+
+	value->Parent(operation);
+	operation->RightHand(value);
 }
 
 inline void ASTBuilder::_CreateSingleNodeFromToken(

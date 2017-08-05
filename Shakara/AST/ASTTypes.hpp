@@ -31,10 +31,9 @@ namespace Shakara
 			DIVIDE          = 0x0C,
 
 			/**
-			 * Special Node Types (print, etc)
+			 * Special Node Types (return, etc)
 			 */
-			PRINT           = 0x0D,
-			RETURN          = 0x0E
+			RETURN          = 0x0D
 		};
 	}
 }
