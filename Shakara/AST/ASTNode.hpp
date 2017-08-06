@@ -43,10 +43,29 @@ namespace Shakara
 				return m_type;
 			}
 
+			inline void MarkDelete(bool state)
+			{
+				m_markDelete = state;
+			}
+
+			inline bool MarkedForDeletion() const
+			{
+				return m_markDelete;
+			}
+
 		protected:
 			Node*             m_parent = nullptr;
 			
 			NodeType          m_type;
+
+			/**
+			 * Used only for the Interpreter.
+			 *
+			 * Allows the interpreter to mark nodes
+			 * for deletion, such as temporary values
+			 * stored for function execution.
+			 */
+			bool              m_markDelete = false;
 
 		};
 	}

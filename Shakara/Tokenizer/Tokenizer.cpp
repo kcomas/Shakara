@@ -62,6 +62,8 @@ TokenizeError Tokenizer::Tokenize(
 
 			Token token;
 			_SetTokenFromValue(&token, value);
+			token.line   = line;
+			token.column = column;
 
 			tokens.push_back(token);
 
@@ -114,8 +116,10 @@ TokenizeError Tokenizer::Tokenize(
 			parsingString = false;
 
 			Token token;
-			token.type  = TokenType::STRING;
-			token.value = value;
+			token.type   = TokenType::STRING;
+			token.value  = value;
+			token.line   = line;
+			token.column = column;
 
 			tokens.push_back(token);
 
@@ -139,6 +143,8 @@ TokenizeError Tokenizer::Tokenize(
 			{
 				Token token;
 				_SetTokenFromValue(&token, value);
+				token.line   = line;
+				token.column = column;
 
 				tokens.push_back(token);
 
@@ -148,6 +154,8 @@ TokenizeError Tokenizer::Tokenize(
 			// Now, push the single character token
 			Token token;
 			_SetTokenFromValue(&token, std::string(1, current));
+			token.line   = line;
+			token.column = column;
 
 			// Try and make a urary operator
 			if (_MakeUrary(
@@ -181,6 +189,8 @@ TokenizeError Tokenizer::Tokenize(
 	{
 		Token token;
 		_SetTokenFromValue(&token, value);
+		token.line   = line;
+		token.column = column;
 
 		tokens.push_back(token);
 

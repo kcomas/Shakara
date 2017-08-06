@@ -13,6 +13,7 @@ namespace Shakara
 
 			IdentifierNode(const IdentifierNode& identifier)
 			{
+				m_type  = identifier.Type();
 				m_value = identifier.Value();
 			}
 

@@ -11,6 +11,7 @@
 #include "../AST/Nodes/ASTAssignmentNode.hpp"
 #include "../AST/Nodes/ASTIdentifierNode.hpp"
 #include "../AST/Nodes/ASTBinaryOperation.hpp"
+#include "../AST/Nodes/ASTFunctionDeclarationNode.hpp"
 
 using namespace Shakara;
 using namespace Shakara::AST;
@@ -30,12 +31,18 @@ Interpreter::Interpreter(std::ostream& output)
 Interpreter::~Interpreter()
 {
 	for (auto itr : m_globals)
-		delete itr.second;
+		if (itr.second->Type() != NodeType::FUNCTION)
+			delete itr.second;
 
 	m_globals.clear();
 }
 
-void Interpreter::Execute(RootNode* root)
+void Interpreter::Execute(
+	RootNode*                          root,
+	bool                               function,
+	Node**,
+	std::map<const std::string, Node*> scope
+)
 {
 	// Go through each node in the AST and
 	// start executing
@@ -47,23 +54,59 @@ void Interpreter::Execute(RootNode* root)
 		{
 			FunctionCall* call = static_cast<FunctionCall*>(node);
 
+			// Execute a special print function call
+			// if the flag is set, otherwise, just
+			// run a function
 			if (call->Flags() == CallFlags::PRINT)
-				_ExecutePrint(call);
-
-			// TODO: Implement regular function calls
-			// for now, just the special `print` call
-			// is implemented
+				_ExecutePrint(call, scope);
+			else
+				_ExecuteFunction(call, scope);
 		}
 		else if (node->Type() == NodeType::ASSIGN)
 		{
 			AssignmentNode* assign = static_cast<AssignmentNode*>(node);
 
-			_ExecuteAssign(assign);
+			_ExecuteAssign(
+				assign,
+				function,
+				scope
+			);
+		}
+		else if (node->Type() == NodeType::FUNCTION)
+		{
+			if (function)
+			{
+				std::cerr << "Interpreter Error! Cannot declare a function within another function!" << std::endl;
+
+				continue;
+			}
+
+			FunctionDeclaration* declaration = static_cast<FunctionDeclaration*>(node);
+
+			_ExecuteFunctionDeclaration(declaration);
+		}
+		else if (node->Type() == NodeType::RETURN)
+		{
+			if (!function)
+			{
+				std::cerr << "Interpreter Error! Cannot return outside of a function body!" << std::endl;
+
+				continue;
+			}
+
+			// Since this is a return statement within a
+			// function, once we hit it, we can break out
+			// of execution.
+			break;
 		}
 	}
 }
 
-void Interpreter::_ExecuteAssign(AST::AssignmentNode* assign)
+void Interpreter::_ExecuteAssign(
+	AST::AssignmentNode* assign,
+	bool local,
+	std::map<const std::string, AST::Node*>& scope
+)
 {
 	// Grab the identifier string for getting (or adding)
 	// to the map
@@ -73,7 +116,9 @@ void Interpreter::_ExecuteAssign(AST::AssignmentNode* assign)
 	// map, if so, remove the previous value and add a new
 	// node
 	//
-	// Otherwise, insert a new entry
+	// Though, if local is true, try finding in the globals
+	// first, and if its there, modify, otherwise, try adding
+	// to the scope map
 	auto find = m_globals.find(identifier);
 
 	Node* value = nullptr;
@@ -81,6 +126,13 @@ void Interpreter::_ExecuteAssign(AST::AssignmentNode* assign)
 	// Check if the assigned value is a singular
 	// type, and if so, just set it to a copy
 	// of that node
+	//
+	// A binary operation will have the value set
+	// to the result of the operation
+	//
+	// Function declarations are stored as the same
+	// node from the AST, thus, if deleting a global
+	// node, check if it is not a function declaration first
 	if (assign->GetAssignment()->Type() == NodeType::INTEGER)
 		value = new IntegerNode(*(static_cast<IntegerNode*>((assign->GetAssignment()))));
 	else if (assign->GetAssignment()->Type() == NodeType::DECIMAL)
@@ -88,19 +140,161 @@ void Interpreter::_ExecuteAssign(AST::AssignmentNode* assign)
 	else if (assign->GetAssignment()->Type() == NodeType::STRING)
 		value = new StringNode(*(static_cast<StringNode*>((assign->GetAssignment()))));
 	else if (assign->GetAssignment()->Type() == NodeType::BINARY_OP)
-		value = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(assign->GetAssignment()));
+		value = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(assign->GetAssignment()), scope);
 
 	if (find != m_globals.end())
 	{
-		delete find->second;
+		if (find->second->Type() != NodeType::FUNCTION)
+			delete find->second;
 
 		m_globals[identifier] = value;
 	}
 	else
-		m_globals.insert(std::make_pair(identifier, value));
+	{
+		// If we should prefer the local scope, then
+		// we try and find the identifier inside of
+		// the scope map, if not found, it is added
+		// to, otherwise, it is modified.
+		//
+		// If we don't prefer local, add to the global
+		// map
+		if (local)
+		{
+			find = scope.find(identifier);
+
+			if (find != scope.end())
+			{
+				if (find->second->Type() != NodeType::FUNCTION)
+					delete find->second;
+
+				scope[identifier] = value;
+			}
+			else
+				scope.insert(std::make_pair(identifier, value));
+		}
+		else
+			m_globals.insert(std::make_pair(identifier, value));
+	}
 }
 
-void Interpreter::_ExecutePrint(AST::FunctionCall* print)
+void Interpreter::_ExecuteFunctionDeclaration(AST::FunctionDeclaration* declaration)
+{
+	// Grab the identifier string for getting (or adding)
+	// to the map
+	const std::string identifier = static_cast<IdentifierNode*>(declaration->Identifier())->Value();
+
+	// Try and see if the identifier exists in the globals
+	// map, if so, remove the previous value and add a new
+	// node
+	//
+	// Though, if local is true, try finding in the globals
+	// first, and if its there, modify, otherwise, try adding
+	// to the scope map
+	auto find = m_globals.find(identifier);
+
+	if (find != m_globals.end())
+	{
+		if (find->second->Type() != NodeType::FUNCTION)
+			delete find->second;
+
+		m_globals[identifier] = declaration;
+	}
+	else
+		m_globals.insert(std::make_pair(identifier, declaration));
+}
+
+void Interpreter::_ExecuteFunction(
+	AST::FunctionCall* call,
+	std::map<const std::string, AST::Node*>& scope
+)
+{
+	// First, try and find the actual function
+	// declaration in the global map
+	FunctionDeclaration* declaration = static_cast<FunctionDeclaration*>(_GetGlobal(static_cast<IdentifierNode*>(call->Identifier())->Value()));
+
+	if (declaration->Arguments().size() != call->Arguments().size())
+	{
+		std::cerr << "Interpreter Error! Mismatched argument sizes!" << std::endl;
+		std::cerr << "Expected: " << declaration->Arguments().size() << "; Got: " << call->Arguments().size() << "!" << std::endl;
+	
+		return;
+	}
+
+	// Create a temporary map to be used for storing
+	// function variables
+	std::map<const std::string, Node*> functionVars;
+
+	// Now iterate through each argument within the call
+	// and the definition to create variables to add to
+	// the global map.
+	//
+	// These variables will be pushed later.
+	for (size_t index = 0; index < call->Arguments().size(); index++)
+	{
+		Node* signature = declaration->Arguments()[index];
+		Node* argument  = call->Arguments()[index];
+
+		// The signature should always be an identifier, no
+		// exceptions
+		if (signature->Type() != NodeType::IDENTIFIER)
+		{
+			std::cerr << "Interpreter Error! Arguments within a function signature cannot be anything but a IDENTIFIER." << std::endl;
+			std::cerr << "Recieved type of: " << _GetNodeTypeName(signature->Type()) << std::endl;
+		}
+
+		// Grab the name of the function declared variable from
+		// the signature
+		const std::string identifier = static_cast<IdentifierNode*>(signature)->Value();
+
+		// Check if the identifier exists before adding it, and if
+		// so throw an error
+		auto exists = m_globals.find(identifier);
+
+		if (exists != m_globals.end())
+		{
+			std::cerr << "Interpreter Error! Identifier \"" << identifier << "\" already exists in global scope!" << std::endl;
+		
+			continue;
+		}
+
+		// If trying to print an identifier, search for it
+		// and then if a node is found, print it out correctly
+		if (argument->Type() == NodeType::IDENTIFIER)
+		{
+			IdentifierNode* referencedName = static_cast<IdentifierNode*>(argument);
+
+			Node* node = _GetGlobal(referencedName->Value(), scope);
+
+			functionVars.insert(std::make_pair(identifier, node));
+		}
+		else if (argument->Type() == NodeType::BINARY_OP)
+		{
+			// Grab the temporary operation result
+			Node* result = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(argument), scope);
+			result->MarkDelete(true);
+
+			functionVars.insert(std::make_pair(identifier, result));
+		}
+		else
+			functionVars.insert(std::make_pair(identifier, argument));
+	}
+
+	// Now that we have all of the arguments, execute the function
+	// with the current arguments
+	Node* returnNode = nullptr;
+	
+	Execute(
+		static_cast<RootNode*>(declaration->Body()),
+		true,
+		&returnNode,
+		functionVars
+	);
+}
+
+void Interpreter::_ExecutePrint(
+	AST::FunctionCall* print,
+	std::map<const std::string, AST::Node*>& scope
+)
 {
 	// Be sure that this is a print call
 	if (print->Flags() != CallFlags::PRINT)
@@ -118,14 +312,14 @@ void Interpreter::_ExecutePrint(AST::FunctionCall* print)
 		{
 			IdentifierNode* identifier = static_cast<IdentifierNode*>(argument);
 
-			Node* node = _GetGlobal(identifier->Value());
+			Node* node = _GetGlobal(identifier->Value(), scope);
 
 			_PrintTypedNode(node);
 		}
 		else if (argument->Type() == NodeType::BINARY_OP)
 		{
 			// Grab the temporary operation result
-			Node* result = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(argument));
+			Node* result = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(argument), scope);
 
 			_PrintTypedNode(result);
 
@@ -165,10 +359,19 @@ void Interpreter::_PrintTypedNode(AST::Node* node)
 
 		break;
 	}
+	default:
+	{
+		m_output << _GetNodeTypeName(node->Type());
+
+		break;
+	}
 	}
 }
 
-AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
+AST::Node* Interpreter::_ExecuteBinaryOperation(
+	AST::BinaryOperation* operation,
+	std::map<const std::string, AST::Node*>& scope
+)
 {
 	// Try and grab left and right hand of the
 	// operation
@@ -179,7 +382,7 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 	// Grab the global variable for the identifier
 	// to be used for operating
 	if (leftHand->Type() == NodeType::IDENTIFIER)
-		leftHand = _GetGlobal(static_cast<IdentifierNode*>(leftHand)->Value());
+		leftHand = _GetGlobal(static_cast<IdentifierNode*>(leftHand)->Value(), scope);
 	// For now, check if the left hand type is not a
 	// operatable type, such as a string or an
 	// integer, and if not, throw an error
@@ -198,10 +401,10 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 	}
 
 	if (rightHand->Type() == NodeType::IDENTIFIER)
-		rightHand = _GetGlobal(static_cast<IdentifierNode*>(rightHand)->Value());
+		rightHand = _GetGlobal(static_cast<IdentifierNode*>(rightHand)->Value(), scope);
 	// Nested binary operations should be handled recursively
 	else if (rightHand->Type() == NodeType::BINARY_OP)
-		rightHand = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(rightHand));
+		rightHand = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(rightHand), scope);
 	// Do the same as with the left hand, check if it is not
 	// an operatable type, and if so throw an error
 	else if (
@@ -446,16 +649,28 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 	return nullptr;
 }
 
-AST::Node* Interpreter::_GetGlobal(const std::string& identifier)
+AST::Node* Interpreter::_GetGlobal(
+	const std::string& identifier,
+	std::map<const std::string, AST::Node*> scope
+)
 {
 	auto find = m_globals.find(identifier);
 
 	if (find == m_globals.end())
 	{
-		std::cerr << "Interpreter Error! Undefined variable \"" << identifier << "\"" << std::endl;
+		find = scope.find(identifier);
 
-		return nullptr;
+		if (find == scope.end())
+		{
+			std::cerr << "Interpreter Error! Variable \"" << identifier << "\" not found in current scope!" << std::endl;
+
+			return nullptr;
+		}
+		else
+			return find->second;
 	}
+	else
+		return find->second;
 
-	return find->second;
+	return nullptr;
 }
