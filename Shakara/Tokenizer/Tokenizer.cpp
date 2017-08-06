@@ -174,6 +174,20 @@ TokenizeError Tokenizer::Tokenize(
 			continue;
 		}
 
+		if (
+			escapeNext &&
+			current == 'n'
+		)
+		{
+			value.push_back('\n');
+
+			column++;
+
+			escapeNext = false;
+
+			continue;
+		}
+
 		last = current;
 
 		value.push_back(current);

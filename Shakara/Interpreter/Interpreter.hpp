@@ -31,6 +31,11 @@ namespace Shakara
 
 		~Interpreter();
 
+		void ErrorHandler(std::function<void()> handler)
+		{
+			m_errorHandle = handler;
+		}
+
 		/**
 		 * Pass in a AST root to start interpreting
 		 * and actually executing code.
@@ -51,6 +56,12 @@ namespace Shakara
 		 * Output stream used for printing
 		 */
 		std::ostream& m_output;
+
+		/**
+		 * Callback function to be used for
+		 * error handling
+		 */
+		std::function<void()> m_errorHandle;
 
 		/**
 		 * Map of strings to Nodes used for storing

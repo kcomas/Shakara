@@ -78,6 +78,9 @@ void Interpreter::Execute(
 			{
 				std::cerr << "Interpreter Error! Cannot declare a function within another function!" << std::endl;
 
+				if (m_errorHandle)
+					m_errorHandle();
+
 				continue;
 			}
 
@@ -90,6 +93,9 @@ void Interpreter::Execute(
 			if (!function)
 			{
 				std::cerr << "Interpreter Error! Cannot return outside of a function body!" << std::endl;
+
+				if (m_errorHandle)
+					m_errorHandle();
 
 				continue;
 			}
@@ -217,6 +223,9 @@ void Interpreter::_ExecuteFunction(
 		std::cerr << "Interpreter Error! Mismatched argument sizes!" << std::endl;
 		std::cerr << "Expected: " << declaration->Arguments().size() << "; Got: " << call->Arguments().size() << "!" << std::endl;
 	
+		if (m_errorHandle)
+			m_errorHandle();
+
 		return;
 	}
 
@@ -240,6 +249,9 @@ void Interpreter::_ExecuteFunction(
 		{
 			std::cerr << "Interpreter Error! Arguments within a function signature cannot be anything but a IDENTIFIER." << std::endl;
 			std::cerr << "Recieved type of: " << _GetNodeTypeName(signature->Type()) << std::endl;
+		
+			if (m_errorHandle)
+				m_errorHandle();
 		}
 
 		// Grab the name of the function declared variable from
@@ -254,6 +266,9 @@ void Interpreter::_ExecuteFunction(
 		{
 			std::cerr << "Interpreter Error! Identifier \"" << identifier << "\" already exists in global scope!" << std::endl;
 		
+			if (m_errorHandle)
+				m_errorHandle();
+
 			continue;
 		}
 
@@ -394,8 +409,8 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 	{
 		std::cerr << "Interpreter Error! Unrecognized type in left hand of operation!" << std::endl;
 
-		// TODO: Implement error handler for say, exiting the program
-		// in the case of a fatal error
+		if (m_errorHandle)
+			m_errorHandle();
 
 		return nullptr;
 	}
@@ -415,8 +430,8 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 	{
 		std::cerr << "Interpreter Error! Unrecognized type in right hand of operation!" << std::endl;
 
-		// TODO: Implement error handler for say, exiting the program
-		// in the case of a fatal error
+		if (m_errorHandle)
+			m_errorHandle();
 
 		return nullptr;
 	}
@@ -456,11 +471,11 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 	else
 	{
 		std::cerr << "Interpreter Error! Mismatched type for operation." << std::endl;
-		std::cerr << "Left-hand type: " << _GetNodeTypeName(leftHand->Type());
-		std::cerr << "Right-hand type: " << _GetNodeTypeName(rightHand->Type()) << std::endl;
+		std::cerr << "Left-hand type: " << _GetNodeTypeName(leftHand->Type()) << ";";
+		std::cerr << " Right-hand type: " << _GetNodeTypeName(rightHand->Type()) << std::endl;
 
-		// TODO: Implement a error callback for say exiting the
-		// program if an error occurs
+		if (m_errorHandle)
+			m_errorHandle();
 
 		return nullptr;
 	}
@@ -550,6 +565,9 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 		{
 			std::cerr << "Interpreter Error! Cannot subtract a string from a string!" << std::endl;
 
+			if (m_errorHandle)
+				m_errorHandle();
+
 			return nullptr;
 		}
 
@@ -591,6 +609,9 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 		{
 			std::cerr << "Interpreter Error! Cannot multply a string by a string!" << std::endl;
 
+			if (m_errorHandle)
+				m_errorHandle();
+
 			return nullptr;
 		}
 
@@ -631,6 +652,9 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 		else if (result->Type() == NodeType::STRING)
 		{
 			std::cerr << "Interpreter Error! Cannot divide a string by a string!" << std::endl;
+	
+			if (m_errorHandle)
+				m_errorHandle();
 
 			return nullptr;
 		}
@@ -641,6 +665,9 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 	{
 		std::cerr << "Interpreter Error! Unrecognized operation type!" << std::endl;
 		std::cerr << "Operation type: " << _GetNodeTypeName(operation->Operation()) << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
 
 		return nullptr;
 	}
@@ -663,6 +690,9 @@ AST::Node* Interpreter::_GetGlobal(
 		if (find == scope.end())
 		{
 			std::cerr << "Interpreter Error! Variable \"" << identifier << "\" not found in current scope!" << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
 
 			return nullptr;
 		}
