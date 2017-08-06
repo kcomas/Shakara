@@ -372,7 +372,11 @@ void ASTBuilder::_ParseVariableIncrementDecrement(
 	// node recursively deletes, and will try to
 	// double delete if I use the same identifier
 	// instance
-	operation->LeftHand(new IdentifierNode(*identifier));
+	IdentifierNode* leftIdentifier = new IdentifierNode(*identifier);
+	leftIdentifier->Type(NodeType::IDENTIFIER);
+	leftIdentifier->Parent(operation);
+
+	operation->LeftHand(leftIdentifier);
 
 	// Figure out if this is a increment or
 	// a decrement so that I can assign a
@@ -392,7 +396,9 @@ void ASTBuilder::_ParseVariableIncrementDecrement(
 	// Initialize this to one as we are only incrementing
 	// or decrementing by one
 	IntegerNode* one = new IntegerNode();
+	one->Type(NodeType::INTEGER);
 	one->Value(false, 1);
+	one->Parent(operation);
 
 	operation->RightHand(one);
 
@@ -448,7 +454,11 @@ void ASTBuilder::_ParseVariableArithmeticAssignment(
 	// node recursively deletes, and will try to
 	// double delete if I use the same identifier
 	// instance
-	operation->LeftHand(new IdentifierNode(*identifier));
+	IdentifierNode* leftIdentifier = new IdentifierNode(*identifier);
+	leftIdentifier->Type(NodeType::IDENTIFIER);
+	leftIdentifier->Parent(operation);
+
+	operation->LeftHand(leftIdentifier);
 
 	// Figure out if this is a increment or
 	// a decrement so that I can assign a

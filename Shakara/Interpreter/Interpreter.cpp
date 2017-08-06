@@ -90,14 +90,12 @@ void Interpreter::_ExecuteAssign(AST::AssignmentNode* assign)
 	else if (assign->GetAssignment()->Type() == NodeType::BINARY_OP)
 		value = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(assign->GetAssignment()));
 
-	// Remove the old node to assign a new one
 	if (find != m_globals.end())
+	{
 		delete find->second;
 
-	// TODO: Implement binary operation assignment
-
-	if (find != m_globals.end())
 		m_globals[identifier] = value;
+	}
 	else
 		m_globals.insert(std::make_pair(identifier, value));
 }
@@ -191,7 +189,10 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 		leftHand->Type() != NodeType::STRING
 	)
 	{
-		// TODO: Throw error here!
+		std::cerr << "Interpreter Error! Unrecognized type in left hand of operation!" << std::endl;
+
+		// TODO: Implement error handler for say, exiting the program
+		// in the case of a fatal error
 
 		return nullptr;
 	}
@@ -209,7 +210,10 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 		rightHand->Type() != NodeType::STRING
 	)
 	{
-		// TODO: Throw error here!
+		std::cerr << "Interpreter Error! Unrecognized type in right hand of operation!" << std::endl;
+
+		// TODO: Implement error handler for say, exiting the program
+		// in the case of a fatal error
 
 		return nullptr;
 	}
@@ -248,8 +252,12 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 	}
 	else
 	{
-		// TODO: Throw a mismatched type error
-		// including the two types
+		std::cerr << "Interpreter Error! Mismatched type for operation." << std::endl;
+		std::cerr << "Left-hand type: " << _GetNodeTypeName(leftHand->Type());
+		std::cerr << "Right-hand type: " << _GetNodeTypeName(rightHand->Type()) << std::endl;
+
+		// TODO: Implement a error callback for say exiting the
+		// program if an error occurs
 
 		return nullptr;
 	}
@@ -337,8 +345,7 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 		}
 		else if (result->Type() == NodeType::STRING)
 		{
-			// TODO: Throw an error, as string can not be
-			// used in an operator type other than ADD
+			std::cerr << "Interpreter Error! Cannot subtract a string from a string!" << std::endl;
 
 			return nullptr;
 		}
@@ -379,8 +386,7 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 		}
 		else if (result->Type() == NodeType::STRING)
 		{
-			// TODO: Throw an error, as string can not be
-			// used in an operator type other than ADD
+			std::cerr << "Interpreter Error! Cannot multply a string by a string!" << std::endl;
 
 			return nullptr;
 		}
@@ -421,8 +427,7 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 		}
 		else if (result->Type() == NodeType::STRING)
 		{
-			// TODO: Throw an error, as string can not be
-			// used in an operator type other than ADD
+			std::cerr << "Interpreter Error! Cannot divide a string by a string!" << std::endl;
 
 			return nullptr;
 		}
@@ -431,8 +436,8 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(AST::BinaryOperation* operation)
 	}
 	default:
 	{
-		// TODO: Throw an error due to a unrecognized
-		// operation type
+		std::cerr << "Interpreter Error! Unrecognized operation type!" << std::endl;
+		std::cerr << "Operation type: " << _GetNodeTypeName(operation->Operation()) << std::endl;
 
 		return nullptr;
 	}
@@ -447,7 +452,7 @@ AST::Node* Interpreter::_GetGlobal(const std::string& identifier)
 
 	if (find == m_globals.end())
 	{
-		// TODO: Implement print of error here
+		std::cerr << "Interpreter Error! Undefined variable \"" << identifier << "\"" << std::endl;
 
 		return nullptr;
 	}

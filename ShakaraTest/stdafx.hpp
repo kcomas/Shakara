@@ -3,6 +3,8 @@
 #include "targetver.hpp"
 #include "CppUnitTest.h"
 
+#include <Windows.h>
+
 #include <vector>
 #include <string>
 #include <sstream>

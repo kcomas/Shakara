@@ -56,6 +56,8 @@ namespace Shakara
 	{
 		TokenType   type   = TokenType::UNKNOWN;
 		std::string value  = "";
+		uint32_t    line   = 1;
+		uint32_t    column = 0;
 	};
 
 	static inline bool IsArithmeticType(const TokenType& type)

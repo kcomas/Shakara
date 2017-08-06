@@ -35,5 +35,42 @@ namespace Shakara
 			 */
 			RETURN          = 0x0D
 		};
+
+		static inline const char* _GetNodeTypeName(const NodeType& type)
+		{
+			switch (type)
+			{
+			case NodeType::ROOT:
+				return "ROOT";
+			case NodeType::ASSIGN:
+				return "ASSIGN";
+			case NodeType::BINARY_OP:
+				return "BINARY OPERATION";
+			case NodeType::FUNCTION:
+				return "FUNCTION DECLARATION";
+			case NodeType::CALL:
+				return "FUNCTION CALL";
+			case NodeType::INTEGER:
+				return "INTEGER";
+			case NodeType::DECIMAL:
+				return "DECIMAL";
+			case NodeType::IDENTIFIER:
+				return "IDENTIFIER";
+			case NodeType::STRING:
+				return "STRING";
+			case NodeType::ADD:
+				return "ADD";
+			case NodeType::SUBTRACT:
+				return "SUBTRACT";
+			case NodeType::MULTIPLY:
+				return "MULTIPLY";
+			case NodeType::DIVIDE:
+				return "DIVIDE";
+			case NodeType::RETURN:
+				return "RETURN";
+			}
+
+			return "UNKNOWN";
+		}
 	}
 }

@@ -19,6 +19,9 @@ TokenizeError Tokenizer::Tokenize(
 	char        current = '\0';
 	char        last    = '\0';
 
+	uint32_t line   = 1;
+	uint32_t column = 0;
+
 	// Whether or not we came upon a quote
 	// and are parsing a string
 	bool parsingString = false;
@@ -43,6 +46,15 @@ TokenizeError Tokenizer::Tokenize(
 			current == '\t')
 		)
 		{
+			if (
+				current == '\n' ||
+				current == '\r\n'
+			)
+			{
+				column = 0;
+				line++;
+			}
+
 			// We have nothing to tokenize!
 			// Move on to the next character.
 			if (value.empty())
@@ -56,6 +68,12 @@ TokenizeError Tokenizer::Tokenize(
 			value.clear();
 			
 			last = current;
+
+			if (
+				current != '\n' &&
+				current != '\r\n'
+			)
+				column++;
 
 			continue;
 		}
@@ -71,6 +89,8 @@ TokenizeError Tokenizer::Tokenize(
 		{
 			escapeNext = true;
 
+			column++;
+
 			continue;
 		}
 
@@ -80,6 +100,8 @@ TokenizeError Tokenizer::Tokenize(
 		if (current == '"' && !parsingString)
 		{
 			parsingString = true;
+
+			column++;
 
 			continue;
 		}
@@ -100,6 +122,8 @@ TokenizeError Tokenizer::Tokenize(
 			value.clear();
 
 			last = current;
+
+			column++;
 
 			continue;
 		}
@@ -137,12 +161,16 @@ TokenizeError Tokenizer::Tokenize(
 
 			last = current;
 
+			column++;
+
 			continue;
 		}
 
 		last = current;
 
 		value.push_back(current);
+
+		column++;
 
 		if (escapeNext)
 			escapeNext = false;
