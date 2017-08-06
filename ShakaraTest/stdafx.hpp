@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <map>
 
 #include "../Shakara/Tokenizer/TokenizerTypes.hpp"
 #include "../Shakara/Tokenizer/Tokenizer.hpp"
@@ -20,3 +21,5 @@
 #include "../Shakara/AST/Nodes/ASTFunctionCallNode.hpp"
 #include "../Shakara/AST/Nodes/ASTStringNode.hpp"
 #include "../Shakara/AST/Nodes/ASTDecimalNode.hpp"
+
+#include "../Shakara/Interpreter/Interpreter.hpp"

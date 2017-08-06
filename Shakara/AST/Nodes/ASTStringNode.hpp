@@ -9,6 +9,15 @@ namespace Shakara
 		class StringNode : public Node
 		{
 		public:
+			StringNode() = default;
+
+			StringNode(const StringNode& rhs)
+			{
+				m_value  = rhs.Value();
+				m_type   = rhs.Type();
+				m_parent = rhs.Parent();
+			}
+
 			inline StringNode& Value(const std::string& value)
 			{
 				m_value = value;

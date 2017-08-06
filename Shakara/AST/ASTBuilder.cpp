@@ -306,6 +306,13 @@ void ASTBuilder::_ParseFunctionCall(
 			break;
 		}
 
+		if (tokens[*next].type == TokenType::ARG_SEPERATOR)
+		{
+			(*next)++;
+
+			continue;
+		}
+
 		Node* value = _GetBinaryOpOrSingleNode(
 			tokens,
 			*next,
@@ -314,12 +321,6 @@ void ASTBuilder::_ParseFunctionCall(
 
 		value->Parent(call);
 		call->InsertArgument(value);
-
-		// ParseBinaryOperation automatically increments
-		// next, thus, only increment if we don't use a
-		// binary operation
-		if (value->Type() != NodeType::BINARY_OP)
-			(*next)++;
 	}
 
 	root->Insert(call);

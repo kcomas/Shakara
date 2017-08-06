@@ -63,6 +63,9 @@
     <ClCompile Include="AST\Nodes\ASTReturnNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Interpreter\Interpreter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.hpp">
@@ -111,6 +114,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AST\Nodes\ASTReturnNode.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interpreter\Interpreter.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
