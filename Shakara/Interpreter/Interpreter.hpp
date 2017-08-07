@@ -20,7 +20,46 @@ namespace Shakara
 		class BinaryOperation;
 
 		class FunctionDeclaration;
+
+		class IfStatement;
 	}
+
+	/**
+	 * A structure containing a map of variables to identifiers,
+	 * as well as a parent scope.
+	 *
+	 * Allows for recursive scope searching, and dynamic scope
+	 * creation.
+	 */
+	struct Scope
+	{
+		Scope*                                  parent = nullptr;
+		std::map<const std::string, AST::Node*> variables;
+
+		~Scope();
+
+		/**
+		 * Attempt to insert a node into the current scope.
+		 *
+		 * Will also check the parent's ability to update
+		 * beforehand.
+		 */
+		void Insert(const std::string& identifier, AST::Node* node);
+
+		/**
+		 * Attempt to update a node upward.
+		 *
+		 * If no update is made, false is returned.
+		 */
+		bool Update(const std::string& identifier, AST::Node* node);
+
+		AST::Node* Search(const std::string& identifier);
+
+		AST::Node* operator[](const std::string& identifier)
+		{
+			return variables[identifier];
+		}
+	};
 
 	class Interpreter
 	{
@@ -28,8 +67,6 @@ namespace Shakara
 		Interpreter();
 
 		Interpreter(std::ostream& output);
-
-		~Interpreter();
 
 		void ErrorHandler(std::function<void()> handler)
 		{
@@ -45,10 +82,10 @@ namespace Shakara
 		 * be ignored for the end-user.
 		 */
 		void Execute(
-			AST::RootNode*                          root,
-			bool                                    function=false,
-			AST::Node**                             returned=nullptr,
-			std::map<const std::string, AST::Node*> scope=std::map<const std::string, AST::Node*>()
+			AST::RootNode* root,
+			bool           function=false,
+			AST::Node**    returned=nullptr,
+			Scope*         scope=nullptr
 		);
 
 	private:
@@ -64,13 +101,9 @@ namespace Shakara
 		std::function<void()> m_errorHandle;
 
 		/**
-		 * Map of strings to Nodes used for storing
-		 * variables and their values globally
-		 *
-		 * Used by any Node that requires accessing
-		 * an identifier
+		 * The global scope for each assignment and definition.
 		 */
-		std::map<const std::string, AST::Node*> m_globals;
+		Scope m_globalScope;
 		
 		/**
 		 * Take in an assignment node, and attempt to
@@ -81,9 +114,26 @@ namespace Shakara
 		 * scope, preferably.
 		 */
 		void _ExecuteAssign(
-			AST::AssignmentNode*                     assign,
-			bool                                     local,
-			std::map<const std::string, AST::Node*>& scope
+			AST::AssignmentNode* assign,
+			bool                 local,
+			Scope&               scope
+		);
+
+		/**
+		 * Take in an if statement node, evaluate its condition
+		 * and subsequently, if true, run its body.
+		 *
+		 * This function takes in whether or not its run within
+		 * a function, as well as a returned node and a scope.
+		 *
+		 * The returned node is only for within functions, and is
+		 * passed back to the function if not null.
+		 */
+		void _ExecuteIfStatement(
+			AST::IfStatement* statement,
+			bool              function,
+			AST::Node**       returned,
+			Scope&            scope
 		);
 
 		/**
@@ -101,7 +151,7 @@ namespace Shakara
 		 */
 		AST::Node* _ExecuteFunction(
 			AST::FunctionCall* call,
-			std::map<const std::string, AST::Node*>& scope
+			Scope&             scope
 		);
 
 		/**
@@ -113,7 +163,7 @@ namespace Shakara
 		 */
 		void _ExecutePrint(
 			AST::FunctionCall* print,
-			std::map<const std::string, AST::Node*>& scope
+			Scope&             scope
 		);
 
 		/**
@@ -128,22 +178,7 @@ namespace Shakara
 		 */
 		AST::Node* _ExecuteBinaryOperation(
 			AST::BinaryOperation* operation,
-			std::map<const std::string, AST::Node*>& scope
-		);
-
-		/**
-		 * Get the value for an identifier within the
-		 * globals map.
-		 *
-		 * The scope parameter is optional and used for
-		 * passing function defined variables to grab
-		 * from.
-		 *
-		 * Returns nullptr if none is found.
-		 */
-		AST::Node* _GetGlobal(
-			const std::string& identifier,
-			std::map<const std::string, AST::Node*> scope=std::map<const std::string, AST::Node*>()
+			Scope&                scope
 		);
 
 	};
