@@ -12,6 +12,7 @@
 #include "../AST/Nodes/ASTIdentifierNode.hpp"
 #include "../AST/Nodes/ASTBinaryOperation.hpp"
 #include "../AST/Nodes/ASTFunctionDeclarationNode.hpp"
+#include "../AST/Nodes/ASTReturnNode.hpp"
 
 using namespace Shakara;
 using namespace Shakara::AST;
@@ -40,7 +41,7 @@ Interpreter::~Interpreter()
 void Interpreter::Execute(
 	RootNode*                          root,
 	bool                               function,
-	Node**,
+	Node**                             returned,
 	std::map<const std::string, Node*> scope
 )
 {
@@ -100,6 +101,42 @@ void Interpreter::Execute(
 				continue;
 			}
 
+			// Grab the return node and its returned value
+			ReturnNode* returnNode = static_cast<ReturnNode*>(node);
+			Node*       returnable = returnNode->GetReturned();
+
+			// Create a new node based on the returned type
+			// or throw an error if the type isn't a supported
+			// type
+			if (returnable->Type() == NodeType::IDENTIFIER)
+			{
+				// TODO: Find a way to get this 
+				// actually i could use the mark delete
+				// flag as true for all of these, and then
+				// do it that way
+				*returned = _GetGlobal(static_cast<IdentifierNode*>(returnable)->Value(), scope)->Clone();
+				(*returned)->MarkDelete(true);
+			}
+			else if (
+				returnable->Type() == NodeType::INTEGER ||
+				returnable->Type() == NodeType::DECIMAL ||
+				returnable->Type() == NodeType::STRING
+			)
+			{
+				*returned = returnable->Clone();
+				(*returned)->MarkDelete(true);
+			}
+			else if (returnable->Type() == NodeType::BINARY_OP)
+			{
+				*returned = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(returnable), scope);
+				(*returned)->MarkDelete(true);
+			}
+			else if (returnable->Type() == NodeType::CALL)
+			{
+				*returned = _ExecuteFunction(static_cast<FunctionCall*>(returnable), scope);
+				(*returned)->MarkDelete(false);
+			}
+
 			// Since this is a return statement within a
 			// function, once we hit it, we can break out
 			// of execution.
@@ -109,9 +146,9 @@ void Interpreter::Execute(
 }
 
 void Interpreter::_ExecuteAssign(
-	AST::AssignmentNode* assign,
+	AssignmentNode* assign,
 	bool local,
-	std::map<const std::string, AST::Node*>& scope
+	std::map<const std::string, Node*>& scope
 )
 {
 	// Grab the identifier string for getting (or adding)
@@ -147,6 +184,23 @@ void Interpreter::_ExecuteAssign(
 		value = new StringNode(*(static_cast<StringNode*>((assign->GetAssignment()))));
 	else if (assign->GetAssignment()->Type() == NodeType::BINARY_OP)
 		value = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(assign->GetAssignment()), scope);
+	else if (assign->GetAssignment()->Type() == NodeType::CALL)
+		value = _ExecuteFunction(static_cast<FunctionCall*>(assign->GetAssignment()), scope);
+
+	if (!value)
+	{
+		std::cerr << "Interpreter Error! Invalid type used in assignment!" << std::endl;
+
+		if (assign->GetAssignment()->Type() == NodeType::CALL)
+			std::cerr << "Tried to use a function's return value as an assignment, when the function did not return!" << std::endl;
+		else
+			std::cerr << "Type: " << _GetNodeTypeName(assign->GetAssignment()->Type()) << std::endl;
+	
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// TODO: Add an error if the value is nullptr still
 
 	if (find != m_globals.end())
 	{
@@ -209,9 +263,9 @@ void Interpreter::_ExecuteFunctionDeclaration(AST::FunctionDeclaration* declarat
 		m_globals.insert(std::make_pair(identifier, declaration));
 }
 
-void Interpreter::_ExecuteFunction(
-	AST::FunctionCall* call,
-	std::map<const std::string, AST::Node*>& scope
+Node* Interpreter::_ExecuteFunction(
+	FunctionCall* call,
+	std::map<const std::string, Node*>& scope
 )
 {
 	// First, try and find the actual function
@@ -226,7 +280,7 @@ void Interpreter::_ExecuteFunction(
 		if (m_errorHandle)
 			m_errorHandle();
 
-		return;
+		return nullptr;
 	}
 
 	// Create a temporary map to be used for storing
@@ -290,6 +344,21 @@ void Interpreter::_ExecuteFunction(
 
 			functionVars.insert(std::make_pair(identifier, result));
 		}
+		else if (argument->Type() == NodeType::CALL)
+		{
+			// Grab the temporary return result
+			Node* result = _ExecuteFunction(static_cast<FunctionCall*>(argument), scope);
+
+			if (!result)
+			{
+				std::cerr << "Interpreter Error! Tried to use function's return value as an argument, when nothing was returned!" << std::endl;
+
+				if (m_errorHandle)
+					m_errorHandle();
+			}
+
+			functionVars.insert(std::make_pair(identifier, result));
+		}
 		else
 			functionVars.insert(std::make_pair(identifier, argument));
 	}
@@ -304,11 +373,17 @@ void Interpreter::_ExecuteFunction(
 		&returnNode,
 		functionVars
 	);
+
+	for (auto itr : functionVars)
+		if (itr.second->MarkedForDeletion())
+			delete itr.second;
+
+	return returnNode;
 }
 
 void Interpreter::_ExecutePrint(
-	AST::FunctionCall* print,
-	std::map<const std::string, AST::Node*>& scope
+	FunctionCall* print,
+	std::map<const std::string, Node*>& scope
 )
 {
 	// Be sure that this is a print call
@@ -340,6 +415,25 @@ void Interpreter::_ExecutePrint(
 
 			// Result isn't required anymore, delete
 			delete result;
+		}
+		else if (argument->Type() == NodeType::CALL)
+		{
+			// Grab the temporary operation result
+			Node* result = _ExecuteFunction(static_cast<FunctionCall*>(argument), scope);
+
+			if (!result)
+			{
+				std::cerr << "Interpreter Error! Tried to use function's return value as an argument, when nothing was returned!" << std::endl;
+
+				if (m_errorHandle)
+					m_errorHandle();
+			}
+
+			_PrintTypedNode(result);
+
+			// Result isn't required anymore, delete
+			if (result->MarkedForDeletion())
+				delete result;
 		}
 		else
 			_PrintTypedNode(argument);

@@ -81,8 +81,8 @@ namespace Shakara
 		 * scope, preferably.
 		 */
 		void _ExecuteAssign(
-			AST::AssignmentNode*                    assign,
-			bool                                    local,
+			AST::AssignmentNode*                     assign,
+			bool                                     local,
 			std::map<const std::string, AST::Node*>& scope
 		);
 
@@ -95,8 +95,11 @@ namespace Shakara
 		/**
 		 * Take in a function call node, and attempt to
 		 * assign parameters and run the function.
+		 *
+		 * Returns a Node that represents the return of
+		 * the function, can be nullptr.
 		 */
-		void _ExecuteFunction(
+		AST::Node* _ExecuteFunction(
 			AST::FunctionCall* call,
 			std::map<const std::string, AST::Node*>& scope
 		);

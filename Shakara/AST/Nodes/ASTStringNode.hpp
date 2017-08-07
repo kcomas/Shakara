@@ -30,6 +30,11 @@ namespace Shakara
 				return m_value;
 			}
 
+			Node* Clone()
+			{
+				return new StringNode(*this);
+			}
+
 		private:
 			std::string m_value = "";
 

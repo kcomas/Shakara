@@ -205,12 +205,13 @@ namespace ShakaraTest
 
 						count += adder
 
-						print(count)
+						return count
 					}
 
-					count_up(1)
-					count_up(4)
-					count_up(6)
+					print(count_up(1))
+					print(count_up(4))
+					print(count_up(6))
+					print(count_up(count_up(2)))
 				)";
 
 				std::stringstream stream(code, std::ios::in);
@@ -231,9 +232,47 @@ namespace ShakaraTest
 				Shakara::Interpreter interpreter(output);
 				interpreter.Execute(&root);
 
-				// Should be "038"
+				// Should be "03817"
 				Assert::AreEqual(
-					"038",
+					"03817",
+					output.str().c_str()
+				);
+			}
+
+			TEST_METHOD(InterpretFunctionReturn)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					exclaim_name = (name)
+					{
+						return name + "!"
+					}
+
+					print(exclaim_name("Maxwell"))
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				std::stringstream output;
+
+				Shakara::Interpreter interpreter(output);
+				interpreter.Execute(&root);
+
+				// Should be "Maxwell!"
+				Assert::AreEqual(
+					"Maxwell!",
 					output.str().c_str()
 				);
 			}

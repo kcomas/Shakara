@@ -53,6 +53,11 @@ namespace Shakara
 				return m_markDelete;
 			}
 
+			virtual Node* Clone()
+			{
+				return new Node(*this);
+			}
+
 		protected:
 			Node*             m_parent = nullptr;
 			

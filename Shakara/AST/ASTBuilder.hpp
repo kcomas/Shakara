@@ -10,6 +10,8 @@ namespace Shakara
 
 		class Node;
 
+		class FunctionCall;
+
 		class BinaryOperation;
 
 		/**
@@ -80,10 +82,22 @@ namespace Shakara
 
 			/**
 			 * Attempt to parse a function call
-			 * into a corresponding node.
+			 * into a corresponding node and insert
+			 * into the root node.
 			 */
 			void _ParseFunctionCall(
 				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
+			 * Attempt to parse a function call
+			 * into a corresponding node.
+			 */
+			void _ParseFunctionCall(
+				FunctionCall*       call,
 				std::vector<Token>& tokens,
 				size_t              index,
 				ptrdiff_t*          next
@@ -125,13 +139,16 @@ namespace Shakara
 			);
 
 			/**
-			 * Checks the token after the current index
-			 * to see if it is a binary operation
+			 * Checks if the token after index matches
+			 * a BEGIN_ARGs, which then means it's a
+			 * function call and should be made as such.
 			 *
-			 * If it is, a BinaryOperation node is returned
-			 * otherwise, a single typed node is returned
+			 * Next up, if that fails, it will check if it
+			 * is a binary operation, after which, it will
+			 * check for a singular type, like a INTEGER or
+			 * string.
 			 */
-			Node* _GetBinaryOpOrSingleNode(
+			Node* _GetPassableNode(
 				std::vector<Token>& tokens,
 				size_t              index,
 				ptrdiff_t*          next

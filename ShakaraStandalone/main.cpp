@@ -7,6 +7,7 @@
 #include "../Shakara/Tokenizer/TokenizerTypes.hpp"
 #include "../Shakara/Tokenizer/Tokenizer.hpp"
 #include "../Shakara/AST/ASTBuilder.hpp"
+#include "../Shakara/AST/ASTNode.hpp"
 #include "../Shakara/AST/Nodes/ASTRootNode.hpp"
 #include "../Shakara/Interpreter/Interpreter.hpp"
 

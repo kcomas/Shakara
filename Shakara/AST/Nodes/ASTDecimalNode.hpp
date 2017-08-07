@@ -31,6 +31,11 @@ namespace Shakara
 				return m_value;
 			}
 
+			Node* Clone()
+			{
+				return new DecimalNode(*this);
+			}
+
 		private:
 			bool m_negative = false;
 
