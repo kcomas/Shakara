@@ -70,12 +70,16 @@ namespace Shakara
 		uint32_t    column = 0;
 	};
 
-	static inline bool IsArithmeticType(const TokenType& type)
+	static inline bool IsBinaryType(const TokenType& type)
 	{
-		return (type == TokenType::PLUS)     ||
-			   (type == TokenType::MINUS)    ||
-			   (type == TokenType::MULTIPLY) ||
-			   (type == TokenType::DIVIDE);
+		return (type == TokenType::PLUS)                ||
+			   (type == TokenType::MINUS)               ||
+			   (type == TokenType::MULTIPLY)            ||
+			   (type == TokenType::DIVIDE)              ||
+			   (type == TokenType::EQUAL_COMPARISON)    ||
+			   (type == TokenType::NOTEQUAL_COMPARISON) || 
+			   (type == TokenType::AND)                 ||
+			   (type == TokenType::OR);
 	}
 
 	static inline bool IsUraryType(const TokenType& type)

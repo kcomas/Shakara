@@ -142,6 +142,12 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../stdafx.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="AST\Nodes\ASTBooleanNode.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="AST\Nodes\ASTDecimalNode.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
@@ -161,6 +167,12 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="AST\Nodes\ASTIdentifierNode.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="AST\Nodes\ASTIfStatementNode.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
@@ -231,10 +243,12 @@
     <ClInclude Include="AST\Nodes\ASTAssignmentNode.hpp" />
     <ClInclude Include="AST\Nodes\ASTBinaryOperation.hpp" />
     <ClInclude Include="AST\ASTBuilder.hpp" />
+    <ClInclude Include="AST\Nodes\ASTBooleanNode.hpp" />
     <ClInclude Include="AST\Nodes\ASTDecimalNode.hpp" />
     <ClInclude Include="AST\Nodes\ASTFunctionCallNode.hpp" />
     <ClInclude Include="AST\Nodes\ASTFunctionDeclarationNode.hpp" />
     <ClInclude Include="AST\Nodes\ASTIdentifierNode.hpp" />
+    <ClInclude Include="AST\Nodes\ASTIfStatementNode.hpp" />
     <ClInclude Include="AST\Nodes\ASTIntegerNode.hpp" />
     <ClInclude Include="AST\ASTNode.hpp" />
     <ClInclude Include="AST\ASTTypes.hpp" />

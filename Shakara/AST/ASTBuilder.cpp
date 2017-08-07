@@ -13,6 +13,8 @@
 #include "Nodes/ASTDecimalNode.hpp"
 #include "Nodes/ASTStringNode.hpp"
 #include "Nodes/ASTReturnNode.hpp"
+#include "Nodes/ASTBooleanNode.hpp"
+#include "Nodes/ASTIfStatementNode.hpp"
 
 #include "../Tokenizer/TokenizerTypes.hpp"
 
@@ -175,6 +177,19 @@ bool ASTBuilder::_BuildIndividualNode(
 		);
 
 		return true;
+	
+	}
+	// Parse an if statement
+	else if (tokens[index].type == TokenType::IF_STATEMENT)
+	{
+		_ParseIfStatement(
+			root,
+			tokens,
+			index,
+			next
+		);
+		
+		return true;
 	}
 
 	return false;
@@ -258,6 +273,80 @@ void ASTBuilder::_ParseReturnStatement(
 	root->Insert(retStatement);
 }
 
+void ASTBuilder::_ParseIfStatement(
+	RootNode*           root,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
+	// Create the function declaration node
+	// to be added to the root
+	IfStatement* ifStatement = new IfStatement();
+	ifStatement->Type(NodeType::IF_STATEMENT);
+
+	// Move on to trying to parse the conditions
+	(*next)++;
+
+	// Move on if this token is the beginning
+	// of the conditions
+	if (tokens[*next].type == TokenType::BEGIN_ARGS)
+		(*next)++;
+
+	// Attempt to parse the whole condition as
+	// a big node, either as one single node,
+	// or as a binary operation, either way,
+	// it will be done as follows
+	Node* value = _GetPassableNode(
+		tokens,
+		*next,
+		next
+	);
+
+	value->Parent(ifStatement);
+	ifStatement->Condition(value);
+
+	// If we are at the end of the condition, move on
+	if (tokens[*next].type == TokenType::END_ARGS)
+		(*next)++;
+
+	// Once we are done with the condition, check if there's a
+	// BEGIN_BLOCK token at the current location
+	if (tokens[*next].type == TokenType::BEGIN_BLOCK)
+		(*next)++;
+
+	// Now, like with functions, do a while loop
+	// to build an if body
+	RootNode* body = new RootNode();
+
+	while (static_cast<size_t>((*next)) < tokens.size())
+	{
+		if (tokens[*next].type == TokenType::END_BLOCK)
+			break;
+
+		// Attempt to build a new node for the
+		// function, if one is not able to be
+		// made, continue to the next token
+		if (!_BuildIndividualNode(
+			body,
+			tokens,
+			*next,
+			next
+		))
+		(*next)++;
+	}
+
+	// Now add the body statements to the declaration
+	// and add the declaration to the root
+	ifStatement->Body(body);
+
+	root->Insert(ifStatement);
+}
+
 void ASTBuilder::_ParseFunctionCall(
 	RootNode*           root,
 	std::vector<Token>& tokens,
@@ -288,11 +377,6 @@ void ASTBuilder::_ParseFunctionCall(
 	// Start by setting the next token
 	// as the index passed in
 	*next = index;
-
-	/*// Create the function call node for
-	// addition to the AST
-	FunctionCall* call = new FunctionCall();
-	call->Type(NodeType::CALL);*/
 
 	// Set the identifier as the first token
 	// at the passed in index
@@ -650,7 +734,7 @@ Node* ASTBuilder::_GetPassableNode(
 	}
 	else if (
 		static_cast<size_t>((*next) + 1) < tokens.size() &&
-		IsArithmeticType(tokens[(*next) + 1].type)
+		IsBinaryType(tokens[(*next) + 1].type)
 	)
 	{
 		BinaryOperation* operation = new BinaryOperation();
@@ -670,9 +754,10 @@ Node* ASTBuilder::_GetPassableNode(
 	// a number of sorts
 	else if (
 		tokens[*next].type == TokenType::IDENTIFIER ||
-		tokens[*next].type == TokenType::INTEGER ||
-		tokens[*next].type == TokenType::DECIMAL ||
-		tokens[*next].type == TokenType::STRING
+		tokens[*next].type == TokenType::INTEGER    ||
+		tokens[*next].type == TokenType::DECIMAL    ||
+		tokens[*next].type == TokenType::STRING     ||
+		tokens[*next].type == TokenType::BOOLEAN
 	)
 	{
 		Node* value = nullptr;
@@ -729,6 +814,18 @@ void ASTBuilder::_ParseBinaryOperation(
 		break;
 	case TokenType::DIVIDE:
 		op = NodeType::DIVIDE;
+		break;
+	case TokenType::EQUAL_COMPARISON:
+		op = NodeType::EQUAL_COMPARISON;
+		break;
+	case TokenType::NOTEQUAL_COMPARISON:
+		op = NodeType::NOTEQUAL_COMPARISON;
+		break;
+	case TokenType::AND:
+		op = NodeType::AND;
+		break;
+	case TokenType::OR:
+		op = NodeType::OR;
 		break;
 	default:
 		// TODO: Throw an error
@@ -789,6 +886,15 @@ inline void ASTBuilder::_CreateSingleNodeFromToken(
 		static_cast<StringNode*>(*node)->Value(token.value);
 
 		(*node)->Type(NodeType::STRING);
+
+		break;
+	}
+	case TokenType::BOOLEAN:
+	{
+		*node = new BooleanNode();
+		static_cast<BooleanNode*>(*node)->Value(token.value == "true");
+
+		(*node)->Type(NodeType::BOOLEAN);
 
 		break;
 	}

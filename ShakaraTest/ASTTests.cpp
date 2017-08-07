@@ -798,6 +798,105 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(ASTBuildBooleanAndLogicOperation)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					test_bool      = true
+					test_bool_test = test_bool && 1 == 1
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be two children in
+				// the root node, the definition node
+				Assert::AreEqual(
+					static_cast<size_t>(2),
+					static_cast<size_t>(root.Children())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[0]->Type())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[1]->Type())
+				);
+
+				Shakara::AST::AssignmentNode* node = static_cast<Shakara::AST::AssignmentNode*>(root[1]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(node->GetAssignment()->Type())
+				);
+			}
+
+			TEST_METHOD(ASTBuildIfStatement)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					has_name = true
+					name     = "Maxwell"
+					
+					if (has_name && name == "Maxwell" || name == "Jack")
+					{
+						name += "!"	
+					}
+
+					name += "!"
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be two children in
+				// the root node, the definition node
+				Assert::AreEqual(
+					static_cast<size_t>(4),
+					static_cast<size_t>(root.Children())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[0]->Type())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[1]->Type())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::IF_STATEMENT),
+					static_cast<uint8_t>(root[2]->Type())
+				);
+			}
+
 		};
 	}
 }

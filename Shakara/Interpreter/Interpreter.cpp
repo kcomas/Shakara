@@ -498,7 +498,8 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 	else if (
 		leftHand->Type() != NodeType::INTEGER &&
 		leftHand->Type() != NodeType::DECIMAL &&
-		leftHand->Type() != NodeType::STRING
+		leftHand->Type() != NodeType::STRING  &&
+		leftHand->Type() != NodeType::BOOLEAN
 	)
 	{
 		std::cerr << "Interpreter Error! Unrecognized type in left hand of operation!" << std::endl;
@@ -519,7 +520,8 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 	else if (
 		rightHand->Type() != NodeType::INTEGER &&
 		rightHand->Type() != NodeType::DECIMAL &&
-		rightHand->Type() != NodeType::STRING
+		rightHand->Type() != NodeType::STRING  &&
+		rightHand->Type() != NodeType::BOOLEAN
 	)
 	{
 		std::cerr << "Interpreter Error! Unrecognized type in right hand of operation!" << std::endl;
@@ -555,7 +557,7 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 		result->Type(NodeType::INTEGER);
 	}
 	else if (
-		leftHand->Type() == NodeType::STRING &&
+		leftHand->Type() == NodeType::STRING  &&
 		rightHand->Type() == NodeType::STRING
 	)
 	{

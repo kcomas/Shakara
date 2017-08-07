@@ -81,6 +81,17 @@ namespace Shakara
 			);
 
 			/**
+			 * Attempt to parse an if statement to the
+			 * AST.
+			 */
+			void _ParseIfStatement(
+				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
 			 * Attempt to parse a function call
 			 * into a corresponding node and insert
 			 * into the root node.
