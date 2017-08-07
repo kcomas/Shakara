@@ -539,6 +539,150 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(TokenizeIfBoolean)
+			{
+				std::string statement = R"(
+					has_name = true
+					name     = "Maxwell"
+
+					if (has_name && name == "Maxwell" || name == "Jack")
+					{
+						name += "!"
+					}
+				)";
+
+				std::stringstream stream(statement, std::ios::in);
+
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Make sure that we have three tokens
+				// for this test statement
+				Assert::AreEqual(static_cast<size_t>(23), tokens.size());
+
+				// Next, make sure that each token is
+				// the right type
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[0].type),
+					L"Incorrect type! Expected an IDENTIFIER type."
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::EQUAL),
+					static_cast<uint8_t>(tokens[1].type),
+					L"Incorrect Type! Expected an EQUAL type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::BOOLEAN),
+					static_cast<uint8_t>(tokens[2].type),
+					L"Incorrect Type! Expected a BOOLEAN type!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[3].type),
+					L"Incorrect type! Expected an IDENTIFIER type."
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::EQUAL),
+					static_cast<uint8_t>(tokens[4].type),
+					L"Incorrect Type! Expected an EQUAL type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::STRING),
+					static_cast<uint8_t>(tokens[5].type),
+					L"Incorrect Type! Expected a STRING type!"
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IF_STATEMENT),
+					static_cast<uint8_t>(tokens[6].type),
+					L"Incorrect type! Expected an IF_STATEMENT type."
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::BEGIN_ARGS),
+					static_cast<uint8_t>(tokens[7].type),
+					L"Incorrect Type! Expected a BEGIN_ARGS type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[8].type),
+					L"Incorrect Type! Expected an IDENTIFIER type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::AND),
+					static_cast<uint8_t>(tokens[9].type),
+					L"Incorrect Type! Expected an AND type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[10].type),
+					L"Incorrect Type! Expected an IDENTIFIER type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::EQUAL_COMPARISON),
+					static_cast<uint8_t>(tokens[11].type),
+					L"Incorrect Type! Expected an EQUAL_COMPARISON type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::STRING),
+					static_cast<uint8_t>(tokens[12].type),
+					L"Incorrect Type! Expected a STRING type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::OR),
+					static_cast<uint8_t>(tokens[13].type),
+					L"Incorrect Type! Expected an OR type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[14].type),
+					L"Incorrect Type! Expected an IDENTIFIER type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::EQUAL_COMPARISON),
+					static_cast<uint8_t>(tokens[15].type),
+					L"Incorrect Type! Expected an EQUAL_COMPARISON type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::STRING),
+					static_cast<uint8_t>(tokens[16].type),
+					L"Incorrect Type! Expected a STRING type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::END_ARGS),
+					static_cast<uint8_t>(tokens[17].type),
+					L"Incorrect Type! Expected an END_ARGS type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::BEGIN_BLOCK),
+					static_cast<uint8_t>(tokens[18].type),
+					L"Incorrect Type! Expected a BEGIN_BLOCK type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[19].type),
+					L"Incorrect Type! Expected an IDENTIFIER type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::PLUS_EQUAL),
+					static_cast<uint8_t>(tokens[20].type),
+					L"Incorrect Type! Expected a PLUS_EQUAL type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::STRING),
+					static_cast<uint8_t>(tokens[21].type),
+					L"Incorrect Type! Expected a STRING type!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::END_BLOCK),
+					static_cast<uint8_t>(tokens[22].type),
+					L"Incorrect Type! Expected a END_BLOCK type!"
+				);
+			}
+
 		};
 	}
 }

@@ -175,7 +175,8 @@ TokenizeError Tokenizer::Tokenize(
 		}
 
 		if (
-			escapeNext &&
+			parsingString &&
+			escapeNext    &&
 			current == 'n'
 		)
 		{
@@ -237,8 +238,19 @@ bool Tokenizer::_MakeUrary(
 		lastChar     == '='
 	)
 	{
-		current.type  = TokenType::COMPARISON;
+		current.type  = TokenType::EQUAL_COMPARISON;
 		current.value = "==";
+
+		return true;
+	}
+	else if (
+		last.type == TokenType::NOT &&
+		current.type == TokenType::EQUAL &&
+		lastChar == '!'
+	)
+	{
+		current.type = TokenType::NOTEQUAL_COMPARISON;
+		current.value = "!=";
 
 		return true;
 	}
@@ -303,7 +315,7 @@ bool Tokenizer::_MakeUrary(
 		lastChar     == '/'
 	)
 	{
-		current.type = TokenType::DIVIDE_EQUAL;
+		current.type  = TokenType::DIVIDE_EQUAL;
 		current.value = "/=";
 
 		return true;
@@ -350,6 +362,9 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 		case '}':
 			*type = TokenType::END_BLOCK;
 			return true;
+		case '!':
+			*type = TokenType::NOT;
+			return true;
 		default: break;
 		}
 	}
@@ -362,6 +377,31 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 	else if (value == "return")
 	{
 		*type = TokenType::RETURN;
+		return true;
+	}
+	else if (value == "if")
+	{
+		*type = TokenType::IF_STATEMENT;
+		return true;
+	}
+	else if (value == "true")
+	{
+		*type = TokenType::BOOLEAN;
+		return true;
+	}
+	else if (value == "false")
+	{
+		*type = TokenType::BOOLEAN;
+		return true;
+	}
+	else if (value == "&&")
+	{
+		*type = TokenType::AND;
+		return true;
+	}
+	else if (value == "||")
+	{
+		*type = TokenType::OR;
 		return true;
 	}
 
