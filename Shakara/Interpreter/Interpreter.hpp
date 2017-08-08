@@ -184,13 +184,10 @@ namespace Shakara
 		);
 
 		/**
-		 * Execute a binary operation that should only
-		 * contain logical portions, such as != or ==.
-		 *
-		 * This is mainly used for if statements or
-		 * similar statements.
+		 * Execute a logical operation and return a
+		 * singular BooleanNode from it
 		 */
-		AST::BooleanNode* _ExecuteLogicalBinaryOperation(
+		AST::BooleanNode* _ExecuteLogicalOperation(
 			AST::BinaryOperation* operation,
 			Scope&                scope
 		);

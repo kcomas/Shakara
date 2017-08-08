@@ -189,7 +189,7 @@ bool ASTBuilder::_BuildIndividualNode(
 			next
 		);
 		
-		return true;
+		return false;
 	}
 
 	return false;
@@ -340,7 +340,9 @@ void ASTBuilder::_ParseIfStatement(
 	while (static_cast<size_t>((*next)) < tokens.size())
 	{
 		if (tokens[*next].type == TokenType::END_BLOCK)
+		{
 			break;
+		}
 
 		// Attempt to build a new node for the
 		// function, if one is not able to be
@@ -351,7 +353,7 @@ void ASTBuilder::_ParseIfStatement(
 			*next,
 			next
 		))
-		(*next)++;
+			(*next)++;
 	}
 
 	// Now add the body statements to the declaration
