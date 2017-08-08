@@ -874,21 +874,6 @@ namespace ShakaraTest
 				Shakara::AST::ASTBuilder builder;
 				builder.Build(&root, tokens);
 
-				// After I come back, separate AND and OR nodes
-				// into a LogicalExpression node that can contain
-				// identifiers, binary expressions, or other logical
-				// expressions so that evaluating AND as well as OR
-				// is much easier
-				//
-				// This will require breaking the AND as well as OR
-				// nodes away from the BinaryOperation, and other types
-				// while still placing them within a LogicalExpression
-				//
-				// This may just be a matter of a while loop until the
-				// end of arguments for a if (or any other conditional)
-				// and seeing whether or not there is an AND or OR
-				// and acting accordingly
-
 				// There should only be two children in
 				// the root node, the definition node
 				Assert::AreEqual(
@@ -909,6 +894,48 @@ namespace ShakaraTest
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::AST::NodeType::IF_STATEMENT),
 					static_cast<uint8_t>(root[2]->Type())
+				);
+			}
+
+			TEST_METHOD(ASTBuildWhileStatement)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					while (condition)
+						print(condition)
+					
+					print("Yes!")	
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be two children in
+				// the root node, the definition node
+				Assert::AreEqual(
+					static_cast<size_t>(2),
+					static_cast<size_t>(root.Children())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::WHILE_STATEMENT),
+					static_cast<uint8_t>(root[0]->Type())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::CALL),
+					static_cast<uint8_t>(root[1]->Type())
 				);
 			}
 

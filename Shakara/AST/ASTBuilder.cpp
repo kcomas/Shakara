@@ -15,6 +15,7 @@
 #include "Nodes/ASTReturnNode.hpp"
 #include "Nodes/ASTBooleanNode.hpp"
 #include "Nodes/ASTIfStatementNode.hpp"
+#include "Nodes/ASTWhileStatementNode.hpp"
 
 #include "../Tokenizer/TokenizerTypes.hpp"
 
@@ -191,6 +192,18 @@ bool ASTBuilder::_BuildIndividualNode(
 		
 		return true;
 	}
+	// Parse a while statement
+	else if (tokens[index].type == TokenType::WHILE_STATEMENT)
+	{
+		_ParseWhileStatement(
+			root,
+			tokens,
+			index,
+			next
+		);
+
+		return true;
+	}
 
 	return false;
 }
@@ -284,8 +297,8 @@ void ASTBuilder::_ParseIfStatement(
 	// as the index passed in
 	*next = index;
 
-	// Create the function declaration node
-	// to be added to the root
+	// Create the if statement node that will be
+	// added to the root
 	IfStatement* ifStatement = new IfStatement();
 	ifStatement->Type(NodeType::IF_STATEMENT);
 
@@ -296,24 +309,6 @@ void ASTBuilder::_ParseIfStatement(
 	// of the conditions
 	if (tokens[*next].type == TokenType::BEGIN_ARGS)
 		(*next)++;
-
-	// This may work really well or really horribly
-	//
-	// Use a while loop to try and parse the conditions
-	// as either identifiers, binary expressions, or
-	// an overall LogicalOperation which would contain
-	// any type.
-	//
-	// This allows for easier evaluation of the if
-	// statement at the parsing level.
-	/*Node* condition = _ParseLogicalOperation(
-		tokens,
-		*next,
-		next
-	);
-
-	condition->Parent(ifStatement);
-	ifStatement->Condition(condition);*/
 
 	Node* value = _GetPassableNode(
 		tokens,
@@ -388,6 +383,108 @@ void ASTBuilder::_ParseIfStatement(
 		ifStatement->Body(body);
 
 		root->Insert(ifStatement);
+	}
+}
+
+void ASTBuilder::_ParseWhileStatement(
+	RootNode*           root,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
+	// Create the while statement node for
+	// the root node
+	WhileStatement* whileStatement = new WhileStatement();
+	whileStatement->Type(NodeType::WHILE_STATEMENT);
+
+	// Move on to trying to parse the conditions
+	(*next)++;
+
+	// Move on if this token is the beginning
+	// of the conditions
+	if (tokens[*next].type == TokenType::BEGIN_ARGS)
+		(*next)++;
+
+	// Parse a node to be used as the condition
+	// for the while statement
+	Node* value = _GetPassableNode(
+		tokens,
+		*next,
+		next
+	);
+
+	value->Parent(whileStatement);
+	whileStatement->Condition(value);
+
+	// If we are at the end of the condition, move on
+	if (tokens[*next].type == TokenType::END_ARGS)
+		(*next)++;
+
+	RootNode* body = new RootNode();
+
+	// Once we are done with the condition, check if there's a
+	// BEGIN_BLOCK token at the current location
+	if (tokens[*next].type == TokenType::BEGIN_BLOCK)
+	{
+		(*next)++;
+
+		// Now, like with functions, do a while loop
+		// to build an if body
+		while (static_cast<size_t>((*next)) < tokens.size())
+		{
+			if (tokens[*next].type == TokenType::END_BLOCK)
+			{
+				(*next)++;
+
+				break;
+			}
+
+			// Attempt to build a new node for the
+			// function, if one is not able to be
+			// made, continue to the next token
+			if (!_BuildIndividualNode(
+				body,
+				tokens,
+				*next,
+				next
+			))
+			(*next)++;
+		}
+
+		// Now add the body statements to the declaration
+		// and add the declaration to the root
+		whileStatement->Body(body);
+
+		root->Insert(whileStatement);
+	}
+	// This might be a little bit funky but, I usually omit braces
+	// in an if statement if it is only one line, so therefore, I'm
+	// going to make it so that, if there is no BEGIN_BLOCK, a statement
+	// will be yanked ahead and put into the body, this could be a cause
+	// for errors in a user's code, but that's more operator error, I feel
+	else
+	{
+		bool madeNew = _BuildIndividualNode(
+			body,
+			tokens,
+			*next,
+			next
+		);
+
+		if (!madeNew)
+			(*next)++;
+
+		// Set the body to the root node with
+		// only one expression inside and then
+		// continue
+		whileStatement->Body(body);
+
+		root->Insert(whileStatement);
 	}
 }
 

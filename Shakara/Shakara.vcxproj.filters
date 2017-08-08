@@ -72,6 +72,9 @@
     <ClCompile Include="AST\Nodes\ASTIfStatementNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AST\Nodes\ASTWhileStatementNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.hpp">
@@ -129,6 +132,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AST\Nodes\ASTIfStatementNode.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AST\Nodes\ASTWhileStatementNode.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

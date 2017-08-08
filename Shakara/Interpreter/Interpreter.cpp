@@ -15,6 +15,7 @@
 #include "../AST/Nodes/ASTReturnNode.hpp"
 #include "../AST/Nodes/ASTBooleanNode.hpp"
 #include "../AST/Nodes/ASTIfStatementNode.hpp"
+#include "../AST/Nodes/ASTWhileStatementNode.hpp"
 
 using namespace Shakara;
 using namespace Shakara::AST;
@@ -138,7 +139,6 @@ void Interpreter::Execute(
 
 			_ExecuteAssign(
 				assign,
-				function,
 				currentScope
 			);
 		}
@@ -153,7 +153,21 @@ void Interpreter::Execute(
 				currentScope
 			);
 
-			if (*returned)
+			if (function && *returned)
+				break;
+		}
+		else if (node->Type() == NodeType::WHILE_STATEMENT)
+		{
+			WhileStatement* statement = static_cast<WhileStatement*>(node);
+
+			_ExecuteWhileStatement(
+				statement,
+				function,
+				returned,
+				currentScope
+			);
+
+			if (function && *returned)
 				break;
 		}
 		else if (node->Type() == NodeType::FUNCTION)
@@ -235,7 +249,6 @@ void Interpreter::Execute(
 
 void Interpreter::_ExecuteAssign(
 	AssignmentNode* assign,
-	bool            ,
 	Scope&          scope
 )
 {
@@ -377,6 +390,82 @@ void Interpreter::_ExecuteIfStatement(
 			returnNode,
 			&ifScope
 		);
+	}
+}
+
+void Interpreter::_ExecuteWhileStatement(
+	WhileStatement* statement,
+	bool         function,
+	Node**       returnNode,
+	Scope&       scope
+)
+{
+	// First, try and evaluate the condition
+	Node* condition = statement->Condition();
+
+	if (condition->Type() == NodeType::IDENTIFIER)
+		condition = scope.Search(static_cast<IdentifierNode*>(condition)->Value());
+	else if (condition->Type() == NodeType::CALL)
+		condition = _ExecuteFunction(static_cast<FunctionCall*>(condition), scope);
+	else if (condition->Type() == NodeType::BINARY_OP)
+		condition = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(condition), scope);
+	else if (condition->Type() == NodeType::LOGICAL_OP)
+		condition = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(condition), scope);
+
+	// Make sure that the condition is a boolean value
+	// otherwise, you can't exactly "evaluate" the statement
+	if (condition->Type() != NodeType::BOOLEAN)
+	{
+		std::cerr << "Interpreter Error! If statement's condition must be of a boolean return!" << std::endl;
+		std::cerr << "Current condition type: " << _GetNodeTypeName(condition->Type()) << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+
+		return;
+	}
+
+	// Create another scope for the while statement, as
+	// to not muddy up the previous scope
+	Scope whileScope  = { 0 };
+	whileScope.parent = &scope;
+
+	// Now, for the while loop, while the condition evaluates to
+	// false, execute and then subsequently re-evaluate
+	while (static_cast<BooleanNode*>(condition)->Value())
+	{
+		Execute(
+			static_cast<RootNode*>(statement->Body()),
+			function,
+			returnNode,
+			&whileScope
+		);
+
+		// Re-evaluate using the same code as used above
+		// First, try and evaluate the condition
+		condition = statement->Condition();
+
+		if (condition->Type() == NodeType::IDENTIFIER)
+			condition = scope.Search(static_cast<IdentifierNode*>(condition)->Value());
+		else if (condition->Type() == NodeType::CALL)
+			condition = _ExecuteFunction(static_cast<FunctionCall*>(condition), scope);
+		else if (condition->Type() == NodeType::BINARY_OP)
+			condition = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(condition), scope);
+		else if (condition->Type() == NodeType::LOGICAL_OP)
+			condition = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(condition), scope);
+
+		// Make sure that the condition is a boolean value
+		// otherwise, you can't exactly "evaluate" the statement
+		if (condition->Type() != NodeType::BOOLEAN)
+		{
+			std::cerr << "Interpreter Error! If statement's condition must be of a boolean return!" << std::endl;
+			std::cerr << "Current condition type: " << _GetNodeTypeName(condition->Type()) << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return;
+		}
 	}
 }
 

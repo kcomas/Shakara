@@ -92,6 +92,17 @@ namespace Shakara
 			);
 
 			/**
+			 * Attempt to parse a while statement to the
+			 * AST.
+			 */
+			void _ParseWhileStatement(
+				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
 			 * Attempt to parse a logical operation into
 			 * the AST.
 			 */

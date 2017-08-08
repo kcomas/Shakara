@@ -126,3 +126,18 @@ The code for using a return is like below
     }
 
 Return cannot be used outside of a function.
+
+### If Statements
+
+If statements are like any other C-like language, with the following syntax:
+
+    if (condition)
+    {
+        block
+    }
+
+Also, like many other C-like languages, braces in if statements can be omitted,
+but then only one statement is allowed in the body.
+
+    if (condition)
+        statement

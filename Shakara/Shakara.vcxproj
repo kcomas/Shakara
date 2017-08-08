@@ -214,6 +214,12 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="AST\Nodes\ASTWhileStatementNode.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../stdafx.hpp</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="Interpreter\Interpreter.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../stdafx.hpp</PrecompiledHeaderFile>
@@ -255,6 +261,7 @@
     <ClInclude Include="AST\Nodes\ASTReturnNode.hpp" />
     <ClInclude Include="AST\Nodes\ASTRootNode.hpp" />
     <ClInclude Include="AST\Nodes\ASTStringNode.hpp" />
+    <ClInclude Include="AST\Nodes\ASTWhileStatementNode.hpp" />
     <ClInclude Include="Interpreter\Interpreter.hpp" />
     <ClInclude Include="stdafx.hpp" />
     <ClInclude Include="Tokenizer\Tokenizer.hpp" />

@@ -59,7 +59,8 @@ namespace Shakara
 		NOT                 = 0x1A,
 		EQUAL_COMPARISON    = 0x1B,
 		NOTEQUAL_COMPARISON = 0x1C,
-		IF_STATEMENT        = 0x1D
+		IF_STATEMENT        = 0x1D,
+		WHILE_STATEMENT     = 0x1E
 	};
 
 	struct Token

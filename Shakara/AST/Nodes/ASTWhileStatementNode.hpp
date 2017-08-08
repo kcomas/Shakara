@@ -6,24 +6,24 @@ namespace Shakara
 {
 	namespace AST
 	{
-		class IfStatement : public Node
+		class WhileStatement : public Node
 		{
 		public:
-			~IfStatement()
+			~WhileStatement()
 			{
 				delete m_condition;
 
 				delete m_body;
 			}
 
-			inline IfStatement& Condition(Node* node)
+			inline WhileStatement& Condition(Node* node)
 			{
 				m_condition = node;
 
 				return *this;
 			}
 
-			inline IfStatement& Body(Node* node)
+			inline WhileStatement& Body(Node* node)
 			{
 				node->Parent(this);
 
@@ -45,7 +45,7 @@ namespace Shakara
 		private:
 			Node* m_condition = nullptr;
 
-			Node* m_body      = nullptr;
+			Node* m_body = nullptr;
 
 		};
 	}

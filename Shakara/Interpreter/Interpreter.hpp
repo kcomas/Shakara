@@ -21,6 +21,8 @@ namespace Shakara
 
 		class FunctionDeclaration;
 
+		class WhileStatement;
+
 		class BooleanNode;
 
 		class IfStatement;
@@ -117,7 +119,6 @@ namespace Shakara
 		 */
 		void _ExecuteAssign(
 			AST::AssignmentNode* assign,
-			bool                 local,
 			Scope&               scope
 		);
 
@@ -133,6 +134,24 @@ namespace Shakara
 		 */
 		void _ExecuteIfStatement(
 			AST::IfStatement* statement,
+			bool              function,
+			AST::Node**       returned,
+			Scope&            scope
+		);
+
+		/**
+		 * Take in a while statement node, evaluate its condition
+		 * and, if false, run the body, and keep running until the
+		 * condition evaluates to true.
+		 *
+		 * This function takes in whether or not its run within
+		 * a function, as well as a returned node and a scope.
+		 *
+		 * The returned node is only for within functions, and is
+		 * passed back to the function if not null.
+		 */
+		void _ExecuteWhileStatement(
+			AST::WhileStatement* statement,
 			bool              function,
 			AST::Node**       returned,
 			Scope&            scope
