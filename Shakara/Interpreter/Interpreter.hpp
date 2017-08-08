@@ -21,6 +21,8 @@ namespace Shakara
 
 		class FunctionDeclaration;
 
+		class BooleanNode;
+
 		class IfStatement;
 	}
 
@@ -177,6 +179,18 @@ namespace Shakara
 		 * singular Node from it
 		 */
 		AST::Node* _ExecuteBinaryOperation(
+			AST::BinaryOperation* operation,
+			Scope&                scope
+		);
+
+		/**
+		 * Execute a binary operation that should only
+		 * contain logical portions, such as != or ==.
+		 *
+		 * This is mainly used for if statements or
+		 * similar statements.
+		 */
+		AST::BooleanNode* _ExecuteLogicalBinaryOperation(
 			AST::BinaryOperation* operation,
 			Scope&                scope
 		);

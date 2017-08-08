@@ -43,12 +43,6 @@ Node* Scope::Search(const std::string& identifier)
 	return nullptr;
 }
 
-/**
-* Attempt to insert a node into the current scope.
-*
-* Will also check the parent's ability to update
-* beforehand.
-*/
 void Scope::Insert(const std::string& identifier, AST::Node* node)
 {
 	bool updated = false;
@@ -342,6 +336,35 @@ void Interpreter::_ExecuteIfStatement(
 
 	if (condition->Type() == NodeType::IDENTIFIER)
 		condition = scope.Search(static_cast<IdentifierNode*>(condition)->Value());
+	else if (condition->Type() == NodeType::CALL)
+		condition = _ExecuteFunction(static_cast<FunctionCall*>(condition), scope);
+	// For a binary operation, do a special
+	// logical binary operation evaluation
+	//
+	// This means that you cannot set variables
+	// within an if statement, but I never do
+	// that anyway, personally, so I'd say not
+	// to allow that
+	else if (condition->Type() == NodeType::BINARY_OP)
+		condition = _ExecuteLogicalBinaryOperation(static_cast<BinaryOperation*>(condition), scope);
+
+	// Make sure that the condition is a boolean value
+	// otherwise, you can't exactly "evaluate" the statement
+	if (condition->Type() != NodeType::BOOLEAN)
+	{
+		std::cerr << "Interpreter Error! If statement's condition must be of a boolean return!" << std::endl;
+		std::cerr << "Current condition type: " << _GetNodeTypeName(condition->Type()) << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+
+		return;
+	}
+
+	// Create another scope for the if statement, as
+	// to not muddy up the previous scope
+	Scope ifScope  = { 0 };
+	ifScope.parent = &scope;
 
 	// Now that we have all of the arguments, execute the function
 	// with the current arguments
@@ -609,6 +632,8 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 	// to be used for operating
 	if (leftHand->Type() == NodeType::IDENTIFIER)
 		leftHand = scope.Search(static_cast<IdentifierNode*>(leftHand)->Value());
+	else if (leftHand->Type() == NodeType::CALL)
+		leftHand = _ExecuteFunction(static_cast<FunctionCall*>(leftHand), scope);
 	// For now, check if the left hand type is not a
 	// operatable type, such as a string or an
 	// integer, and if not, throw an error
@@ -632,6 +657,8 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 	// Nested binary operations should be handled recursively
 	else if (rightHand->Type() == NodeType::BINARY_OP)
 		rightHand = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(rightHand), scope);
+	else if (rightHand->Type() == NodeType::CALL)
+		rightHand = _ExecuteFunction(static_cast<FunctionCall*>(rightHand), scope);
 	// Do the same as with the left hand, check if it is not
 	// an operatable type, and if so throw an error
 	else if (
@@ -887,4 +914,190 @@ AST::Node* Interpreter::_ExecuteBinaryOperation(
 	}
 
 	return nullptr;
+}
+
+AST::BooleanNode* Interpreter::_ExecuteLogicalBinaryOperation(
+	AST::BinaryOperation* operation,
+	Scope&                scope
+)
+{
+	// Make sure that this is a logical binary expression
+	// by checking if the op type matches
+	if (_LogicalOperation(operation->Operation()))
+		return nullptr;
+
+	// Try and grab left and right hand of the
+	// operation
+	Node* leftHand      = operation->GetLeftHand();
+	Node* rightHand     = operation->GetRightHand();
+	BooleanNode* result = nullptr;
+
+	// Grab the global variable for the identifier
+	// to be used for operating
+	if (leftHand->Type() == NodeType::IDENTIFIER)
+		leftHand = scope.Search(static_cast<IdentifierNode*>(leftHand)->Value());
+	else if (leftHand->Type() == NodeType::CALL)
+		leftHand = _ExecuteFunction(static_cast<FunctionCall*>(leftHand), scope);
+	// For now, check if the left hand type is not a
+	// operatable type, such as a string or an
+	// integer, and if not, throw an error
+	else if (
+		leftHand->Type() != NodeType::INTEGER &&
+		leftHand->Type() != NodeType::DECIMAL &&
+		leftHand->Type() != NodeType::STRING  &&
+		leftHand->Type() != NodeType::BOOLEAN
+	)
+	{
+		std::cerr << "Interpreter Error! Unrecognized type in left hand of operation!" << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+
+		return nullptr;
+	}
+
+	if (rightHand->Type() == NodeType::IDENTIFIER)
+		rightHand = scope.Search(static_cast<IdentifierNode*>(rightHand)->Value());
+	else if (rightHand->Type() == NodeType::CALL)
+		rightHand = _ExecuteFunction(static_cast<FunctionCall*>(rightHand), scope);
+	// Nested binary operations should be handled recursively
+	else if (rightHand->Type() == NodeType::BINARY_OP)
+		rightHand = _ExecuteLogicalBinaryOperation(static_cast<BinaryOperation*>(rightHand), scope);
+	// Do the same as with the left hand, check if it is not
+	// an operatable type, and if so throw an error
+	else if (
+		rightHand->Type() != NodeType::INTEGER &&
+		rightHand->Type() != NodeType::DECIMAL &&
+		rightHand->Type() != NodeType::STRING  &&
+		rightHand->Type() != NodeType::BOOLEAN
+	)
+	{
+		std::cerr << "Interpreter Error! Unrecognized type in right hand of operation!" << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+
+		return nullptr;
+	}
+	
+	// If doing equality checks, make sure that the types
+	// are the same, thus making checking much easier
+	if ((operation->Operation() == NodeType::EQUAL_COMPARISON || operation->Operation() == NodeType::NOTEQUAL_COMPARISON) && leftHand->Type() != rightHand->Type())
+	{
+		std::cerr << "Interpreter Error! Mismatched types in equality checks!" << std::endl;
+		std::cerr << "Left-hand Type: " << _GetNodeTypeName(leftHand->Type()) << "; Right-hand Type: " << _GetNodeTypeName(rightHand->Type()) << std::endl;
+	
+		if (m_errorHandle)
+			m_errorHandle();
+
+		return nullptr;
+	}
+
+	// Create the resulting node
+	result = new BooleanNode();
+
+	// This is going to look very ugly I imagine as different
+	// types are needed to be checked between the different
+	// logic ops
+	switch (operation->Operation())
+	{
+	case NodeType::EQUAL_COMPARISON:
+	{
+		// Since we already checked if the types
+		// are the same between the two sides
+		// we can switch on the left hand type
+		// and cast both
+		switch (leftHand->Type())
+		{
+		case NodeType::INTEGER:
+		{
+			IntegerNode* leftInt  = static_cast<IntegerNode*>(leftHand);
+			IntegerNode* rightInt = static_cast<IntegerNode*>(rightHand);
+
+			result->Value(leftInt->Value() == rightInt->Value());
+
+			break;
+		}
+		case NodeType::DECIMAL:
+		{
+			DecimalNode* leftDec  = static_cast<DecimalNode*>(leftHand);
+			DecimalNode* rightDec = static_cast<DecimalNode*>(rightHand);
+
+			result->Value(leftDec->Value() == rightDec->Value());
+
+			break;
+		}
+		case NodeType::STRING:
+		{
+			StringNode* leftStr  = static_cast<StringNode*>(leftHand);
+			StringNode* rightStr = static_cast<StringNode*>(rightHand);
+
+			result->Value(leftStr->Value() == rightStr->Value());
+
+			break;
+		}
+		case NodeType::BOOLEAN:
+		{
+			BooleanNode* leftBool  = static_cast<BooleanNode*>(leftHand);
+			BooleanNode* rightBool = static_cast<BooleanNode*>(rightHand);
+
+			result->Value(leftBool->Value() == rightBool->Value());
+
+			break;
+		}
+		}
+
+		break;
+	}
+	case NodeType::NOTEQUAL_COMPARISON:
+	{
+		// Since we already checked if the types
+		// are the same between the two sides
+		// we can switch on the left hand type
+		// and cast both
+		switch (leftHand->Type())
+		{
+		case NodeType::INTEGER:
+		{
+			IntegerNode* leftInt  = static_cast<IntegerNode*>(leftHand);
+			IntegerNode* rightInt = static_cast<IntegerNode*>(rightHand);
+
+			result->Value(leftInt->Value() != rightInt->Value());
+
+			break;
+		}
+		case NodeType::DECIMAL:
+		{
+			DecimalNode* leftDec  = static_cast<DecimalNode*>(leftHand);
+			DecimalNode* rightDec = static_cast<DecimalNode*>(rightHand);
+
+			result->Value(leftDec->Value() != rightDec->Value());
+
+			break;
+		}
+		case NodeType::STRING:
+		{
+			StringNode* leftStr  = static_cast<StringNode*>(leftHand);
+			StringNode* rightStr = static_cast<StringNode*>(rightHand);
+
+			result->Value(leftStr->Value() != rightStr->Value());
+
+			break;
+		}
+		case NodeType::BOOLEAN:
+		{
+			BooleanNode* leftBool  = static_cast<BooleanNode*>(leftHand);
+			BooleanNode* rightBool = static_cast<BooleanNode*>(rightHand);
+
+			result->Value(leftBool->Value() != rightBool->Value());
+
+			break;
+		}
+		}
+
+		break;
+	}
+	}
+
+	return result;
 }

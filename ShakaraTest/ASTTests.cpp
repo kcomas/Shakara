@@ -840,7 +840,7 @@ namespace ShakaraTest
 				Shakara::AST::AssignmentNode* node = static_cast<Shakara::AST::AssignmentNode*>(root[1]);
 
 				Assert::AreEqual(
-					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(Shakara::AST::NodeType::LOGICAL_OP),
 					static_cast<uint8_t>(node->GetAssignment()->Type())
 				);
 			}
@@ -873,6 +873,21 @@ namespace ShakaraTest
 				Shakara::AST::RootNode   root;
 				Shakara::AST::ASTBuilder builder;
 				builder.Build(&root, tokens);
+
+				// After I come back, separate AND and OR nodes
+				// into a LogicalExpression node that can contain
+				// identifiers, binary expressions, or other logical
+				// expressions so that evaluating AND as well as OR
+				// is much easier
+				//
+				// This will require breaking the AND as well as OR
+				// nodes away from the BinaryOperation, and other types
+				// while still placing them within a LogicalExpression
+				//
+				// This may just be a matter of a while loop until the
+				// end of arguments for a if (or any other conditional)
+				// and seeing whether or not there is an AND or OR
+				// and acting accordingly
 
 				// There should only be two children in
 				// the root node, the definition node

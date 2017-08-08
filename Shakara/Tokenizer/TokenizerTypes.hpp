@@ -72,14 +72,12 @@ namespace Shakara
 
 	static inline bool IsBinaryType(const TokenType& type)
 	{
-		return (type == TokenType::PLUS)                ||
-			   (type == TokenType::MINUS)               ||
-			   (type == TokenType::MULTIPLY)            ||
-			   (type == TokenType::DIVIDE)              ||
-			   (type == TokenType::EQUAL_COMPARISON)    ||
-			   (type == TokenType::NOTEQUAL_COMPARISON) || 
-			   (type == TokenType::AND)                 ||
-			   (type == TokenType::OR);
+		return (type == TokenType::PLUS)             ||
+			   (type == TokenType::MINUS)            ||
+			   (type == TokenType::MULTIPLY)         ||
+			   (type == TokenType::DIVIDE)           ||
+			   (type == TokenType::EQUAL_COMPARISON) ||
+			   (type == TokenType::NOTEQUAL_COMPARISON);
 	}
 
 	static inline bool IsUraryType(const TokenType& type)

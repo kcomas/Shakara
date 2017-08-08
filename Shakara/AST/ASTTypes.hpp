@@ -10,40 +10,41 @@ namespace Shakara
 			ASSIGN              = 0x01,
 
 			BINARY_OP           = 0x02,
-			FUNCTION            = 0x03,
-			CALL                = 0x04,
-			IF_STATEMENT        = 0x05,
+			LOGICAL_OP          = 0x03,
+			FUNCTION            = 0x04,
+			CALL                = 0x05,
+			IF_STATEMENT        = 0x06,
 
 			/**
 			 * Type Nodes
 			 */
-			INTEGER             = 0x06,
-			DECIMAL             = 0x07,
-			IDENTIFIER          = 0x08,
-			STRING              = 0x09,
-			BOOLEAN             = 0x0A,
+			INTEGER             = 0x07,
+			DECIMAL             = 0x08,
+			IDENTIFIER          = 0x09,
+			STRING              = 0x0A,
+			BOOLEAN             = 0x0B,
 
 			/**
 			 * Arithmetic Types for
 			 * binary operations
 			 */
-			ADD                 = 0x0B,
-			SUBTRACT            = 0x0C,
-			MULTIPLY            = 0x0D,
-			DIVIDE              = 0x0E,
+			ADD                 = 0x0C,
+			SUBTRACT            = 0x0D,
+			MULTIPLY            = 0x0E,
+			DIVIDE              = 0x0F,
 
 			/**
 			 * Logical Types
 			 */
-			EQUAL_COMPARISON    = 0x0F,
-			NOTEQUAL_COMPARISON = 0x10,
-			AND                 = 0x11,
-			OR                  = 0x12,
+			EQUAL_COMPARISON    = 0x10,
+			NOTEQUAL_COMPARISON = 0x11,
+			AND                 = 0x12,
+			OR                  = 0x13,
 
 			/**
 			 * Special Node Types (return, etc)
 			 */
-			RETURN              = 0x13
+			RETURN              = 0x14
 		};
 
 		static inline bool _LogicalOperation(const NodeType& type)

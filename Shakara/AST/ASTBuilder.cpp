@@ -297,10 +297,24 @@ void ASTBuilder::_ParseIfStatement(
 	if (tokens[*next].type == TokenType::BEGIN_ARGS)
 		(*next)++;
 
-	// Attempt to parse the whole condition as
-	// a big node, either as one single node,
-	// or as a binary operation, either way,
-	// it will be done as follows
+	// This may work really well or really horribly
+	//
+	// Use a while loop to try and parse the conditions
+	// as either identifiers, binary expressions, or
+	// an overall LogicalOperation which would contain
+	// any type.
+	//
+	// This allows for easier evaluation of the if
+	// statement at the parsing level.
+	/*Node* condition = _ParseLogicalOperation(
+		tokens,
+		*next,
+		next
+	);
+
+	condition->Parent(ifStatement);
+	ifStatement->Condition(condition);*/
+
 	Node* value = _GetPassableNode(
 		tokens,
 		*next,
@@ -345,6 +359,79 @@ void ASTBuilder::_ParseIfStatement(
 	ifStatement->Body(body);
 
 	root->Insert(ifStatement);
+}
+
+Node* ASTBuilder::_ParseLogicalOperation(
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
+	// Now what we should first try and
+	// build a passable node of sorts,
+	// once that's done, figure out if
+	// we actually have to create a
+	// logical operation
+	Node* value = _GetPassableNode(
+		tokens,
+		*next,
+		next,
+		true
+	);
+
+	// Now, we check and see if the next
+	// token is either an AND or an OR
+	//
+	// If it is, create a LogicalOperation
+	// and set the left side to the value
+	// and the right side to a nested
+	// _ParseLogicalOperation
+	//
+	// Otherwise, just return the value grabbed
+	if (
+		static_cast<size_t>(*next) < tokens.size() &&
+		(tokens[*next].type == TokenType::AND ||
+		tokens[*next].type == TokenType::OR)
+	)
+	{
+		// Move next so that it will parse the first
+		// non logical node
+		(*next)++;
+
+		// The underlying type is a BinaryOperation, but it
+		// is a special LOGICAL_OP type, that differentiates
+		// it in the interpretation stage
+		BinaryOperation* operation = new BinaryOperation();
+		operation->Type(NodeType::LOGICAL_OP);
+
+		value->Parent(operation);
+		operation->LeftHand(value);
+		
+		// Set the operation type based on the token type
+		if (tokens[(*next) - 1].type == TokenType::AND)
+			operation->Operation(NodeType::ADD);
+		else
+			operation->Operation(NodeType::OR);
+
+		// Get the right hand of the operation from
+		// the nested call to this function
+		Node* right = _ParseLogicalOperation(
+			tokens,
+			*next,
+			next
+		);
+		right->Parent(operation);
+
+		operation->RightHand(right);
+
+		return operation;
+	}
+
+	return value;
 }
 
 void ASTBuilder::_ParseFunctionCall(
@@ -700,7 +787,8 @@ void ASTBuilder::_ParseFunctionDefinition(
 Node* ASTBuilder::_GetPassableNode(
 	std::vector<Token>& tokens,
 	size_t              index,
-	ptrdiff_t*          next
+	ptrdiff_t*          next,
+	bool                ignoreLogic
 )
 {
 	// Start by setting the next token
@@ -714,6 +802,14 @@ Node* ASTBuilder::_GetPassableNode(
 	//
 	// If it is, build a BinaryOperation, otherwise, get the
 	// single typed node.
+	//
+	// Also for each of these nodes, there is a potential that
+	// there could be a logical operation that would be skipped
+	//
+	// Just to be safe, afterwards (if able) the next token is
+	// checked to see if it is an AND or OR, and if it is
+	// the last result is thrown away and a logical expression is
+	// parsed from the index
 	if (
 		static_cast<size_t>((*next) + 1) < tokens.size()  &&
 		tokens[(*next)].type     == TokenType::IDENTIFIER &&
@@ -729,6 +825,23 @@ Node* ASTBuilder::_GetPassableNode(
 			*next,
 			next
 		);
+
+		if (
+			static_cast<size_t>((*next)) < tokens.size() &&
+			(tokens[*next].type == TokenType::AND || tokens[*next].type == TokenType::OR) &&
+			!ignoreLogic
+		)
+		{
+			delete call;
+
+			Node* logical = _ParseLogicalOperation(
+				tokens,
+				index,
+				next
+			);
+
+			return logical;
+		}
 
 		return call;
 	}
@@ -746,6 +859,23 @@ Node* ASTBuilder::_GetPassableNode(
 			*next,
 			next
 		);
+
+		if (
+			static_cast<size_t>((*next)) < tokens.size() &&
+			(tokens[*next].type == TokenType::AND || tokens[*next].type == TokenType::OR) &&
+			!ignoreLogic
+		)
+		{
+			delete operation;
+
+			Node* logical = _ParseLogicalOperation(
+				tokens,
+				index,
+				next
+			);
+
+			return logical;
+		}
 
 		return operation;
 	}
@@ -768,6 +898,23 @@ Node* ASTBuilder::_GetPassableNode(
 
 		(*next)++;
 	
+		if (
+			static_cast<size_t>((*next)) < tokens.size() &&
+			(tokens[*next].type == TokenType::AND || tokens[*next].type == TokenType::OR) &&
+			!ignoreLogic
+		)
+		{
+			delete value;
+
+			Node* logical = _ParseLogicalOperation(
+				tokens,
+				index,
+				next
+			);
+
+			return logical;
+		}
+
 		return value;
 	}
 
@@ -821,12 +968,6 @@ void ASTBuilder::_ParseBinaryOperation(
 	case TokenType::NOTEQUAL_COMPARISON:
 		op = NodeType::NOTEQUAL_COMPARISON;
 		break;
-	case TokenType::AND:
-		op = NodeType::AND;
-		break;
-	case TokenType::OR:
-		op = NodeType::OR;
-		break;
 	default:
 		// TODO: Throw an error
 		break;
@@ -836,10 +977,16 @@ void ASTBuilder::_ParseBinaryOperation(
 
 	(*next)++;
 
+	// Ignore parsing a LogicalOperation within
+	// this binary operation, otherwise, it messes
+	// with the flow of the operation, with the logical
+	// operation becoming the right hand as opposed to
+	// the actual other part of the operation
 	Node* value = _GetPassableNode(
 		tokens,
 		*next,
-		next
+		next,
+		true
 	);
 
 	value->Parent(operation);

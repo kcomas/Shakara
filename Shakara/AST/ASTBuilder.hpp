@@ -92,6 +92,16 @@ namespace Shakara
 			);
 
 			/**
+			 * Attempt to parse a logical operation into
+			 * the AST.
+			 */
+			Node* _ParseLogicalOperation(
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
 			 * Attempt to parse a function call
 			 * into a corresponding node and insert
 			 * into the root node.
@@ -158,11 +168,16 @@ namespace Shakara
 			 * is a binary operation, after which, it will
 			 * check for a singular type, like a INTEGER or
 			 * string.
+			 *
+			 * The optional ignore logic boolean is used when
+			 * already parsing a logical expression, so that
+			 * an infinite memory loop is not occuring
 			 */
 			Node* _GetPassableNode(
 				std::vector<Token>& tokens,
 				size_t              index,
-				ptrdiff_t*          next
+				ptrdiff_t*          next,
+				bool                ignoreLogic=false
 			);
 
 			/**
