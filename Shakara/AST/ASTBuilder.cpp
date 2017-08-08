@@ -189,7 +189,7 @@ bool ASTBuilder::_BuildIndividualNode(
 			next
 		);
 		
-		return false;
+		return true;
 	}
 
 	return false;
@@ -328,39 +328,67 @@ void ASTBuilder::_ParseIfStatement(
 	if (tokens[*next].type == TokenType::END_ARGS)
 		(*next)++;
 
+	RootNode* body = new RootNode();
+
 	// Once we are done with the condition, check if there's a
 	// BEGIN_BLOCK token at the current location
 	if (tokens[*next].type == TokenType::BEGIN_BLOCK)
+	{
 		(*next)++;
 
-	// Now, like with functions, do a while loop
-	// to build an if body
-	RootNode* body = new RootNode();
-
-	while (static_cast<size_t>((*next)) < tokens.size())
-	{
-		if (tokens[*next].type == TokenType::END_BLOCK)
+		// Now, like with functions, do a while loop
+		// to build an if body
+		while (static_cast<size_t>((*next)) < tokens.size())
 		{
-			break;
+			if (tokens[*next].type == TokenType::END_BLOCK)
+			{
+				(*next)++;
+				
+				break;
+			}
+
+			// Attempt to build a new node for the
+			// function, if one is not able to be
+			// made, continue to the next token
+			if (!_BuildIndividualNode(
+				body,
+				tokens,
+				*next,
+				next
+			))
+				(*next)++;
 		}
 
-		// Attempt to build a new node for the
-		// function, if one is not able to be
-		// made, continue to the next token
-		if (!_BuildIndividualNode(
+		// Now add the body statements to the declaration
+		// and add the declaration to the root
+		ifStatement->Body(body);
+
+		root->Insert(ifStatement);
+	}
+	// This might be a little bit funky but, I usually omit braces
+	// in an if statement if it is only one line, so therefore, I'm
+	// going to make it so that, if there is no BEGIN_BLOCK, a statement
+	// will be yanked ahead and put into the body, this could be a cause
+	// for errors in a user's code, but that's more operator error, I feel
+	else
+	{
+		bool madeNew = _BuildIndividualNode(
 			body,
 			tokens,
 			*next,
 			next
-		))
+		);
+
+		if (!madeNew)
 			(*next)++;
+
+		// Set the body to the root node with
+		// only one expression inside and then
+		// continue
+		ifStatement->Body(body);
+
+		root->Insert(ifStatement);
 	}
-
-	// Now add the body statements to the declaration
-	// and add the declaration to the root
-	ifStatement->Body(body);
-
-	root->Insert(ifStatement);
 }
 
 Node* ASTBuilder::_ParseLogicalOperation(

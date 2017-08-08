@@ -321,9 +321,7 @@ namespace ShakaraTest
 					namer = (name)
 					{
 						if (name == "Maxwell")
-						{
 							return name + "!"
-						}
 						
 						return name
 					}
