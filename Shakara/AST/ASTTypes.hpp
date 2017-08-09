@@ -33,19 +33,20 @@ namespace Shakara
 			SUBTRACT            = 0x0E,
 			MULTIPLY            = 0x0F,
 			DIVIDE              = 0x10,
+			MODULUS             = 0x11,
 
 			/**
 			 * Logical Types
 			 */
-			EQUAL_COMPARISON    = 0x11,
-			NOTEQUAL_COMPARISON = 0x12,
-			AND                 = 0x13,
-			OR                  = 0x14,
+			EQUAL_COMPARISON    = 0x12,
+			NOTEQUAL_COMPARISON = 0x13,
+			AND                 = 0x14,
+			OR                  = 0x15,
 		
 			/**
 			 * Special Node Types (return, etc)
 			 */
-			RETURN              = 0x15
+			RETURN              = 0x16
 		};
 
 		static inline bool _LogicalOperation(const NodeType& type)

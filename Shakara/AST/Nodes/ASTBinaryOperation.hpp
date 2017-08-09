@@ -11,6 +11,16 @@ namespace Shakara
 		class BinaryOperation : public Node
 		{
 		public:
+			BinaryOperation() = default;
+
+			BinaryOperation(const BinaryOperation& rhs)
+			{
+				m_type      = rhs.Type();
+				m_leftHand  = rhs.GetLeftHand()->Clone();
+				m_operation = rhs.Operation();
+				m_rightHand = rhs.GetRightHand()->Clone();
+			}
+
 			~BinaryOperation()
 			{
 				delete m_leftHand;
@@ -38,19 +48,24 @@ namespace Shakara
 				return *this;
 			}
 
-			inline Node* GetLeftHand()
+			inline Node* GetLeftHand() const
 			{
 				return m_leftHand;
 			}
 
-			inline NodeType& Operation()
+			inline NodeType Operation() const
 			{
 				return m_operation;
 			}
 
-			inline Node* GetRightHand()
+			inline Node* GetRightHand() const
 			{
 				return m_rightHand;
+			}
+
+			Node* Clone()
+			{
+				return new BinaryOperation(*this);
 			}
 
 		private:

@@ -787,6 +787,8 @@ void ASTBuilder::_ParseVariableArithmeticAssignment(
 		operation->Operation(NodeType::MULTIPLY);
 	else if (tokens[*next].type == TokenType::DIVIDE_EQUAL)
 		operation->Operation(NodeType::DIVIDE);
+	else if (tokens[*next].type == TokenType::MODULUS_EQUAL)
+		operation->Operation(NodeType::DIVIDE);
 
 	// Move on for the next call
 	(*next)++;
@@ -987,6 +989,78 @@ Node* ASTBuilder::_GetPassableNode(
 			next
 		);
 
+		// Try and find comparison operations inside
+		// of this binary operation
+		Node* currentHand = operation;
+
+		while (currentHand->Type() == NodeType::BINARY_OP)
+		{
+			BinaryOperation* op = static_cast<BinaryOperation*>(currentHand);
+
+			// If we've found something that we need to convert to have
+			// a correct left and right hand, start doing it
+			if (
+				_LogicalOperation(op->Operation()) &&
+				op->Parent()          != nullptr   &&
+				op->Parent()->Type()  == NodeType::BINARY_OP
+			)
+			{
+				// The new operation to return
+				BinaryOperation* overall = new BinaryOperation();
+				overall->Type(NodeType::BINARY_OP);
+				overall->Operation(op->Operation());
+
+				// The overall operation to perform for the
+				// left of the comparison, will also depend
+				// on if there are binary operation parents
+				// to the parent
+				BinaryOperation* leftOp = new BinaryOperation();
+				leftOp->Parent(overall);
+				leftOp->Type(NodeType::BINARY_OP);
+				leftOp->LeftHand(static_cast<BinaryOperation*>(op->Parent())->GetLeftHand()->Clone());
+				
+				// Since we cloned it, delete the original node
+				delete static_cast<BinaryOperation*>(op->Parent())->GetLeftHand();
+
+				leftOp->GetLeftHand()->Parent(leftOp);
+				leftOp->Operation(static_cast<BinaryOperation*>(op->Parent())->Operation());
+				leftOp->RightHand(op->GetLeftHand()->Clone());
+
+				// Again, delete the original node
+				delete op->GetLeftHand();
+
+				leftOp->GetRightHand()->Parent(leftOp);
+
+				overall->LeftHand(leftOp);
+				overall->RightHand(op->GetRightHand()->Clone());
+
+				// Delete the final cloned node
+				delete op->GetRightHand();
+
+				overall->GetRightHand()->Parent(overall);
+
+				if (op->Parent()->Parent() && op->Parent()->Parent()->Type() == NodeType::BINARY_OP)
+				{
+					BinaryOperation* parentOp = static_cast<BinaryOperation*>(op->Parent()->Parent());
+					overall->Parent(overall);
+
+					parentOp->RightHand(overall);
+
+					delete op;
+
+					break;
+				}
+				else
+				{
+					delete op;
+
+					return overall;
+				}
+			}
+
+			currentHand = op->GetRightHand();
+		}
+
 		if (
 			static_cast<size_t>((*next)) < tokens.size() &&
 			(tokens[*next].type == TokenType::AND || tokens[*next].type == TokenType::OR) &&
@@ -1088,6 +1162,9 @@ void ASTBuilder::_ParseBinaryOperation(
 		break;
 	case TokenType::DIVIDE:
 		op = NodeType::DIVIDE;
+		break;
+	case TokenType::MODULUS:
+		op = NodeType::MODULUS;
 		break;
 	case TokenType::EQUAL_COMPARISON:
 		op = NodeType::EQUAL_COMPARISON;

@@ -320,6 +320,17 @@ bool Tokenizer::_MakeUrary(
 
 		return true;
 	}
+	else if (
+		last.type    == TokenType::MODULUS &&
+		current.type == TokenType::EQUAL &&
+		lastChar     == '%'
+	)
+	{
+		current.type  = TokenType::MODULUS_EQUAL;
+		current.value = "&=";
+
+		return true;
+	}
 
 	return false;
 }
@@ -343,6 +354,9 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 			return true;
 		case '/':
 			*type = TokenType::DIVIDE;
+			return true;
+		case '%':
+			*type = TokenType::MODULUS;
 			return true;
 		case '=':
 			*type = TokenType::EQUAL;
@@ -497,6 +511,7 @@ bool Tokenizer::_IsSingleCharacterToken(char character)
 	case '-':
 	case '*':
 	case '/':
+	case '%':
 	case '=':
 	case '{':
 	case '}':

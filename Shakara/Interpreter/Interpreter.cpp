@@ -739,6 +739,8 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		leftHand = scope.Search(static_cast<IdentifierNode*>(leftHand)->Value());
 	else if (leftHand->Type() == NodeType::CALL)
 		leftHand = _ExecuteFunction(static_cast<FunctionCall*>(leftHand), scope);
+	else if (leftHand->Type() == NodeType::BINARY_OP)
+		leftHand = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(leftHand), scope);
 	// For now, check if the left hand type is not a
 	// operatable type, such as a string or an
 	// integer, and if not, throw an error
