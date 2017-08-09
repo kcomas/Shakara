@@ -783,7 +783,7 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		return nullptr;
 	}
 
-	bool isComparison = (operation->Operation() == NodeType::EQUAL_COMPARISON || operation->Operation() == NodeType::NOTEQUAL_COMPARISON);
+	bool isComparison = _LogicalOperation(operation->Operation());
 
 	// Now, determine what type to use for the result
 	// If either of the sides of the operation are a
@@ -1156,6 +1156,166 @@ Node* Interpreter::_ExecuteBinaryOperation(
 			static_cast<BooleanNode*>(result)->Value(leftBool->Value() != rightBool->Value());
 
 			break;
+		}
+		}
+
+		return result;
+	}
+	case NodeType::LESS_COMPARISON:
+	{
+		// Since we already checked if the types
+		// are the same between the two sides
+		// we can switch on the left hand type
+		// and cast both
+		switch (leftHand->Type())
+		{
+		case NodeType::INTEGER:
+		{
+			IntegerNode* leftInt  = static_cast<IntegerNode*>(leftHand);
+			IntegerNode* rightInt = static_cast<IntegerNode*>(rightHand);
+
+			static_cast<BooleanNode*>(result)->Value(leftInt->Value() < rightInt->Value());
+
+			break;
+		}
+		case NodeType::DECIMAL:
+		{
+			DecimalNode* leftDec  = static_cast<DecimalNode*>(leftHand);
+			DecimalNode* rightDec = static_cast<DecimalNode*>(rightHand);
+
+			static_cast<BooleanNode*>(result)->Value(leftDec->Value() < rightDec->Value());
+
+			break;
+		}
+		default:
+		{
+			std::cerr << "Interpreter Error! Less operator not supported for type used." << std::endl;
+			std::cerr << "Type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return nullptr;
+		}
+		}
+
+		return result;
+	}
+	case NodeType::GREATER_COMPARISON:
+	{
+		// Since we already checked if the types
+		// are the same between the two sides
+		// we can switch on the left hand type
+		// and cast both
+		switch (leftHand->Type())
+		{
+		case NodeType::INTEGER:
+		{
+			IntegerNode* leftInt  = static_cast<IntegerNode*>(leftHand);
+			IntegerNode* rightInt = static_cast<IntegerNode*>(rightHand);
+
+			static_cast<BooleanNode*>(result)->Value(leftInt->Value() > rightInt->Value());
+
+			break;
+		}
+		case NodeType::DECIMAL:
+		{
+			DecimalNode* leftDec  = static_cast<DecimalNode*>(leftHand);
+			DecimalNode* rightDec = static_cast<DecimalNode*>(rightHand);
+
+			static_cast<BooleanNode*>(result)->Value(leftDec->Value() > rightDec->Value());
+
+			break;
+		}
+		default:
+		{
+			std::cerr << "Interpreter Error! Greater operator not supported for type used." << std::endl;
+			std::cerr << "Type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return nullptr;
+		}
+		}
+
+		return result;
+	}
+	case NodeType::LESSEQUAL_COMPARISON:
+	{
+		// Since we already checked if the types
+		// are the same between the two sides
+		// we can switch on the left hand type
+		// and cast both
+		switch (leftHand->Type())
+		{
+		case NodeType::INTEGER:
+		{
+			IntegerNode* leftInt  = static_cast<IntegerNode*>(leftHand);
+			IntegerNode* rightInt = static_cast<IntegerNode*>(rightHand);
+
+			static_cast<BooleanNode*>(result)->Value(leftInt->Value() <= rightInt->Value());
+
+			break;
+		}
+		case NodeType::DECIMAL:
+		{
+			DecimalNode* leftDec  = static_cast<DecimalNode*>(leftHand);
+			DecimalNode* rightDec = static_cast<DecimalNode*>(rightHand);
+
+			static_cast<BooleanNode*>(result)->Value(leftDec->Value() <= rightDec->Value());
+
+			break;
+		}
+		default:
+		{
+			std::cerr << "Interpreter Error! Less equal operator not supported for type used." << std::endl;
+			std::cerr << "Type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return nullptr;
+		}
+		}
+
+		return result;
+	}
+	case NodeType::GREATEREQUAL_COMPARISON:
+	{
+		// Since we already checked if the types
+		// are the same between the two sides
+		// we can switch on the left hand type
+		// and cast both
+		switch (leftHand->Type())
+		{
+		case NodeType::INTEGER:
+		{
+			IntegerNode* leftInt = static_cast<IntegerNode*>(leftHand);
+			IntegerNode* rightInt = static_cast<IntegerNode*>(rightHand);
+
+			static_cast<BooleanNode*>(result)->Value(leftInt->Value() >= rightInt->Value());
+
+			break;
+		}
+		case NodeType::DECIMAL:
+		{
+			DecimalNode* leftDec = static_cast<DecimalNode*>(leftHand);
+			DecimalNode* rightDec = static_cast<DecimalNode*>(rightHand);
+
+			static_cast<BooleanNode*>(result)->Value(leftDec->Value() >= rightDec->Value());
+
+			break;
+		}
+		default:
+		{
+			std::cerr << "Interpreter Error! Greater equal operator not supported for type used." << std::endl;
+			std::cerr << "Type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return nullptr;
 		}
 		}
 

@@ -1174,6 +1174,18 @@ void ASTBuilder::_ParseBinaryOperation(
 	case TokenType::NOTEQUAL_COMPARISON:
 		op = NodeType::NOTEQUAL_COMPARISON;
 		break;
+	case TokenType::LESS_COMPARISON:
+		op = NodeType::LESS_COMPARISON;
+		break;
+	case TokenType::GREATER_COMPARISON:
+		op = NodeType::GREATER_COMPARISON;
+		break;
+	case TokenType::LESSEQUAL_COMPARISON:
+		op = NodeType::LESSEQUAL_COMPARISON;
+		break;
+	case TokenType::GREATEREQUAL_COMPARISON:
+		op = NodeType::GREATEREQUAL_COMPARISON;
+		break;
 	default:
 		// TODO: Throw an error
 		break;

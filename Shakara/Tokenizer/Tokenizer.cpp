@@ -255,6 +255,28 @@ bool Tokenizer::_MakeUrary(
 		return true;
 	}
 	else if (
+		last.type    == TokenType::LESS_COMPARISON &&
+		current.type == TokenType::EQUAL           &&
+		lastChar     == '<'
+	)
+	{
+		current.type = TokenType::LESSEQUAL_COMPARISON;
+		current.value = "<=";
+
+		return true;
+	}
+	else if (
+		last.type    == TokenType::GREATER_COMPARISON &&
+		current.type == TokenType::EQUAL              &&
+		lastChar     == '>'
+	)
+	{
+		current.type = TokenType::GREATEREQUAL_COMPARISON;
+		current.value = ">=";
+
+		return true;
+	}
+	else if (
 		last.type    == TokenType::PLUS &&
 		current.type == TokenType::PLUS &&
 		lastChar     == '+'
@@ -360,6 +382,12 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 			return true;
 		case '=':
 			*type = TokenType::EQUAL;
+			return true;
+		case '<':
+			*type = TokenType::LESS_COMPARISON;
+			return true;
+		case '>':
+			*type = TokenType::GREATER_COMPARISON;
 			return true;
 		case '(':
 			*type = TokenType::BEGIN_ARGS;
@@ -513,6 +541,8 @@ bool Tokenizer::_IsSingleCharacterToken(char character)
 	case '/':
 	case '%':
 	case '=':
+	case '<':
+	case '>':
 	case '{':
 	case '}':
 	case '(':
