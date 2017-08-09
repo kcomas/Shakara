@@ -79,6 +79,7 @@ namespace Shakara
 			   (type == TokenType::MINUS)            ||
 			   (type == TokenType::MULTIPLY)         ||
 			   (type == TokenType::DIVIDE)           ||
+			   (type == TokenType::MODULUS)          ||
 			   (type == TokenType::EQUAL_COMPARISON) ||
 			   (type == TokenType::NOTEQUAL_COMPARISON);
 	}

@@ -23,8 +23,11 @@ namespace Shakara
 
 			~BinaryOperation()
 			{
-				delete m_leftHand;
-				delete m_rightHand;
+				if (m_leftHand)
+					delete m_leftHand;
+
+				if (m_rightHand)
+					delete m_rightHand;
 			}
 
 			inline BinaryOperation& LeftHand(Node* node)

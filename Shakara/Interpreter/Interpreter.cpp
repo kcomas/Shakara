@@ -1021,6 +1021,50 @@ Node* Interpreter::_ExecuteBinaryOperation(
 
 		break;
 	}
+	case NodeType::MODULUS:
+	{
+		if (result->Type() == NodeType::DECIMAL)
+		{
+			float leftVal  = 0.0f;
+			float rightVal = 0.0f;
+
+			// Since the type can be an integer or a
+			// decmial, check and convert for both sides
+			if (leftHand->Type() == NodeType::INTEGER)
+				leftVal = static_cast<float>(static_cast<IntegerNode*>(leftHand)->Value());
+			else if (leftHand->Type() == NodeType::DECIMAL)
+				leftVal = static_cast<float>(static_cast<DecimalNode*>(leftHand)->Value());
+
+			if (rightHand->Type() == NodeType::INTEGER)
+				rightVal = static_cast<float>(static_cast<IntegerNode*>(rightHand)->Value());
+			else if (rightHand->Type() == NodeType::DECIMAL)
+				rightVal = static_cast<float>(static_cast<DecimalNode*>(rightHand)->Value());
+
+			static_cast<DecimalNode*>(result)->Value(false, fmod(leftVal, rightVal));
+
+			return result;
+		}
+		else if (result->Type() == NodeType::INTEGER)
+		{
+			static_cast<IntegerNode*>(result)->Value(
+				false,
+				static_cast<IntegerNode*>(leftHand)->Value() % static_cast<IntegerNode*>(rightHand)->Value()
+			);
+
+			return result;
+		}
+		else if (result->Type() == NodeType::STRING)
+		{
+			std::cerr << "Interpreter Error! Cannot modulus a string!" << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return nullptr;
+		}
+
+		break;
+	}
 	case NodeType::EQUAL_COMPARISON:
 	{
 		// Since we already checked if the types

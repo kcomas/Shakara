@@ -1028,6 +1028,7 @@ Node* ASTBuilder::_GetPassableNode(
 
 				// Again, delete the original node
 				delete op->GetLeftHand();
+				op->LeftHand(nullptr);
 
 				leftOp->GetRightHand()->Parent(leftOp);
 
@@ -1036,6 +1037,7 @@ Node* ASTBuilder::_GetPassableNode(
 
 				// Delete the final cloned node
 				delete op->GetRightHand();
+				op->RightHand(nullptr);
 
 				overall->GetRightHand()->Parent(overall);
 
