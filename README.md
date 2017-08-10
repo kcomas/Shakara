@@ -29,6 +29,38 @@ In addition, with regards to tests, if you feel there is something that is not
 completely represented within the tests, feel free to add to them, as long as it
 makes them more robust.
 
+### Language Examples
+
+Some examples of the language can be found in the
+[Examples](https://github.com/tinfoilboy/Shakara/tree/master/Examples) folder
+in the repo. Though, below you can find an example of FizzBuzz written
+in the language.
+
+    fizzbuzz = (number)
+    {
+	      buzzer = ""
+
+	      if (number % 3 == 0)
+		        buzzer += "Fizz"
+
+	      if (number % 5 == 0)
+		        buzzer += "Buzz"
+
+	      if (buzzer == "")
+		        return number
+
+	      return buzzer
+    }
+
+    count = 1
+
+    while (count <= 100)
+    {
+	      print(fizzbuzz(count), " ")
+
+        count++
+    }
+
 ### Why "Shakara"
 
 [See this song.](https://www.youtube.com/watch?v=vvYxd35xFx8)
