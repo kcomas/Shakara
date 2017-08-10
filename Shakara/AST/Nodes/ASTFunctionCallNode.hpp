@@ -8,7 +8,8 @@ namespace Shakara
 	{
 		enum class CallFlags : uint8_t {
 			NONE  = 0x00,
-			PRINT = 0x01
+			PRINT = 0x01,
+			TYPE  = 0x02
 		};
 
 		class FunctionCall : public Node

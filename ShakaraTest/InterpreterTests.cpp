@@ -464,6 +464,44 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(InterpretTypeCall)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					value = 1
+
+					print(type(value))
+					print(type("Test!"))
+					print(type(2 * 2 + 2))
+					print(type(2 * 2 == 4))
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				std::stringstream output;
+
+				Shakara::Interpreter interpreter(output);
+				interpreter.Execute(&root);
+
+				// Should be "IntegerStringIntegerBoolean"
+				Assert::AreEqual(
+					"IntegerStringIntegerBoolean",
+					output.str().c_str()
+				);
+			}
+
 		};
 	}
 }

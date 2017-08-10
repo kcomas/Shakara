@@ -416,6 +416,11 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 		*type = TokenType::PRINT;
 		return true;
 	}
+	else if (value == "type")
+	{
+		*type = TokenType::TYPE;
+		return true;
+	}
 	else if (value == "return")
 	{
 		*type = TokenType::RETURN;

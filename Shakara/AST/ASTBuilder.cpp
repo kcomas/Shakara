@@ -167,6 +167,22 @@ bool ASTBuilder::_BuildIndividualNode(
 
 		return true;
 	}
+	// Parse the type call as a special function call
+	else if (
+		tokens.size()          >= 2               &&
+		tokens[index].type     == TokenType::TYPE &&
+		tokens[index + 1].type == TokenType::BEGIN_ARGS
+	)
+	{
+		_ParseFunctionCall(
+			root,
+			tokens,
+			index,
+			next
+		);
+
+		return true;
+	}
 	// Parse a return statement
 	else if (tokens[index].type == TokenType::RETURN)
 	{
@@ -605,6 +621,8 @@ void ASTBuilder::_ParseFunctionCall(
 
 	if (tokens[(*next)].type == TokenType::PRINT)
 		call->SetFlags(CallFlags::PRINT);
+	else if (tokens[(*next)].type == TokenType::TYPE)
+		call->SetFlags(CallFlags::TYPE);
 
 	// We know that there's a begin args
 	// after this identifier, so just
@@ -937,7 +955,8 @@ Node* ASTBuilder::_GetPassableNode(
 	// parsed from the index
 	if (
 		static_cast<size_t>((*next) + 1) < tokens.size()  &&
-		tokens[(*next)].type     == TokenType::IDENTIFIER &&
+		(tokens[(*next)].type == TokenType::IDENTIFIER    ||
+		 tokens[(*next)].type == TokenType::TYPE)         &&
 		tokens[(*next) + 1].type == TokenType::BEGIN_ARGS
 	)
 	{

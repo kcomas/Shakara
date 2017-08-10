@@ -125,13 +125,7 @@ void Interpreter::Execute(
 		{
 			FunctionCall* call = static_cast<FunctionCall*>(node);
 
-			// Execute a special print function call
-			// if the flag is set, otherwise, just
-			// run a function
-			if (call->Flags() == CallFlags::PRINT)
-				_ExecutePrint(call, currentScope);
-			else
-				_ExecuteFunction(call, currentScope);
+			_ExecuteFunction(call, currentScope);
 		}
 		else if (node->Type() == NodeType::ASSIGN)
 		{
@@ -443,6 +437,23 @@ Node* Interpreter::_ExecuteFunction(
 	Scope&        scope
 )
 {
+	// If this is a print call, run it as such
+	// and return a nullptr (print returns nothing)
+	if (call->Flags() == CallFlags::PRINT)
+	{
+		_ExecutePrint(
+			call,
+			scope
+		);
+
+		return nullptr;
+	}
+	else if (call->Flags() == CallFlags::TYPE)
+		return _ExecuteType(
+			call,
+			scope
+		);
+
 	// First, try and find the actual function
 	// declaration in the global map
 	FunctionDeclaration* declaration = static_cast<FunctionDeclaration*>(scope.Search(static_cast<IdentifierNode*>(call->Identifier())->Value()));
@@ -680,6 +691,71 @@ void Interpreter::_PrintTypedNode(Node* node)
 		break;
 	}
 	}
+}
+
+Node* Interpreter::_ExecuteType(
+	FunctionCall* type,
+	Scope&        scope
+)
+{
+	// Be sure that this is a print call
+	if (type->Flags() != CallFlags::TYPE)
+		return nullptr;
+
+	// Make sure that only one argument is
+	// in the call, as you can only grab the
+	// type of one node
+	if (type->Arguments().size() == 1)
+	{
+		std::cerr << "Interpreter Error! The \"type\" call can only be used with one argument!" << std::endl;
+		std::cerr << "Argument amount: " << type->Arguments().size() << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// If the argument is of a type, such
+	// as a call or a binary op, execute
+	// it, and then return the string
+	Node*    arg     = type->Arguments()[0];
+	NodeType argType = type->Arguments()[0]->Type();
+
+	if (argType == NodeType::IDENTIFIER)
+	{
+		Node* value = scope.Search(static_cast<IdentifierNode*>(arg)->Value());
+		argType     = value->Type();
+	}
+	else if (argType == NodeType::BINARY_OP)
+	{
+		Node* value = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(arg), scope);
+		argType     = value->Type();
+
+		delete value;
+	}
+	else if (argType == NodeType::LOGICAL_OP)
+	{
+		Node* value = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(arg), scope);
+		argType     = value->Type();
+
+		delete value;
+	}
+	else if (argType == NodeType::CALL)
+	{
+		Node* value = _ExecuteFunction(static_cast<FunctionCall*>(arg), scope);
+		argType     = value->Type();
+
+		delete value;
+	}
+
+	// Grab the single argument, and grab
+	// the string for it, then subsequently
+	// print the StringNode.
+	StringNode* stringRep = new StringNode();
+	stringRep->Type(NodeType::STRING);
+
+	stringRep->Value(_GetNodeTypeName(argType));
+
+	return stringRep;
 }
 
 Node* Interpreter::_ExecuteBinaryOperation(
