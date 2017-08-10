@@ -183,3 +183,63 @@ syntax:
 
 Like with the if statements, you may omit braces if a single statement
 is to be used in the loop.
+
+### *Structs*
+
+For Shakara, I want to experiment with only using struct types as containers
+with no real inheritance to speak of. I may go back on this at some point
+but this is the direction I'd like to go right now.
+
+Structs would reflect their C-like counter parts, being defined with the
+syntax below:
+
+    my_struct
+    {
+        name = ""
+        
+        set_name = (new_name)
+        {
+            name = new_name
+        }
+
+        get_name = ()
+        {
+            return name
+        }
+    }
+
+### *Input-Output Operators*
+
+When programming, a common pattern is I/O. Take an Image for example.
+When creating an Image for modification in a language, you first load
+an image from a file, or create from an array (or similar) of pixels.
+
+This common pattern can be multiple lines usually, or even more,
+depending on the API. But, with the idea of input-output operators,
+this example can be shortened. Take this code for example
+
+    image <- "path/to/image/file"
+
+    // do image operations
+
+    // imagine that the screen variable
+    // is something such as a window in
+    // which to draw to
+    image -> screen
+
+This could also be extended to file loading, by creating a reusable
+instance of a file loader, you could theoretically do something like
+the following example:
+
+    loader = FileLoader()
+    loader.readLineByLine(true)
+
+    buffer = ""
+
+    loader <- "path/to/file"
+
+    while (loader.hasFile())
+        loader -> buffer
+
+This could be extended to many more applications to simplify code for
+input and output significantly.
