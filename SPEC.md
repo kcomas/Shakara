@@ -7,6 +7,10 @@ Use in your own projects at your own risk!
 Due to this being a toy project, it may
 be super insecure and prone to bugs.
 
+For features that may, or may not be, fleshed out,
+their titles will be italicized. Subsequently when
+they are implemented, they will be unitalicized.
+
 ### Important Constructs
 
 With Shakara being dynamically typed, the programmer
@@ -34,7 +38,7 @@ specifying any number with a decimal point.
 Strings in Shakara are specified by wrapping characters in two
 double quotes.
 
-###### Escape Sequences
+##### Escape Sequences
 
 Shakara strings, like many other languages, support escape sequences
 to use characters that could be seen by the parser, or otherwise would
@@ -47,6 +51,11 @@ The ones supported are in the table below.
 | \\n       | newline      |
 | \\\       | backslash    |
 | \\"       | double quote |
+
+### Booleans
+
+Booleans in Shakara are simple `true` or `false` keywords, implemented
+as a `bool` in the underlying C++ interpreter.
 
 ### Arithmetic
 
@@ -63,6 +72,22 @@ math expression, but not as of now.
 Also supported are the operators as follows: `+=`, `-=`,
 `*=`, `/=`, `++`, and `--`. Which function the same as
 languages like C or C++.
+
+### Comparisons
+
+Shakara also supports comparisons like in C-like languages.
+The operations for comparisons are `==`, `!=`, `<`, `>`, `<=`,
+and `>=`.
+
+Booleans do not correspond with integers as well, so `1` and `true`
+are not interchangable, nor is `0` and `false`. If a value should
+be used as a boolean, use an actual boolean.
+
+Each of these comparisons return boolean values if used in definitons
+or function arguments.
+
+Comparisons must also be done on compatible types. Thus, you cannot
+say `1 == "1"` or `1 == true`.
 
 ### Variables
 
@@ -109,8 +134,13 @@ Print supports as many arguments as you need, and these arguments
 will either be printed by their value, or if their value cannot be
 determined, it will print the current type of the variable.
 
-Print automatically appends a newline at the end of the statement,
-so there is no need to use one.
+Print does not automatically create a new line at the end of the
+method. Thus, to add a new line, you can do the following:
+
+    print(types, "\n")
+
+Or, you can embed a new line character, `\n`, in the string that you
+are printing.
 
 ### Return
 
@@ -136,8 +166,20 @@ If statements are like any other C-like language, with the following syntax:
         block
     }
 
-Also, like many other C-like languages, braces in if statements can be omitted,
-but then only one statement is allowed in the body.
+Also, like many other C-like languages, braces in if statements can be omitted, but then only one statement is allowed in the body.
 
     if (condition)
         statement
+
+### While Loops
+
+Like other C-like languages, you can use a while loop with the following
+syntax:
+
+    while (condition)
+    {
+        block
+    }
+
+Like with the if statements, you may omit braces if a single statement
+is to be used in the loop.

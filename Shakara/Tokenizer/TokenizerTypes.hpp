@@ -36,7 +36,7 @@ namespace Shakara
 		STRING                  = 0x0F,
 
 		/**
-		 * Urary Tokens
+		 * Unary Tokens
 		 */
 		INCREMENT               = 0x10,
 		DECREMENT               = 0x11,
@@ -96,7 +96,7 @@ namespace Shakara
 			   (type == TokenType::GREATEREQUAL_COMPARISON);
 	}
 
-	static inline bool IsUraryType(const TokenType& type)
+	static inline bool IsUnaryType(const TokenType& type)
 	{
 		return (type == TokenType::INCREMENT)            ||
 			   (type == TokenType::DECREMENT)            ||

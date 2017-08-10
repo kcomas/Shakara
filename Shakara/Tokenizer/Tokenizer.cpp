@@ -157,8 +157,8 @@ TokenizeError Tokenizer::Tokenize(
 			token.line   = line;
 			token.column = column;
 
-			// Try and make a urary operator
-			if (_MakeUrary(
+			// Try and make a unary operator
+			if (_MakeUnary(
 				token,
 				tokens[tokens.size() - 1],
 				last
@@ -225,7 +225,7 @@ void Tokenizer::_SetTokenFromValue(Token* token, const std::string& value)
 	(*token).value = value;
 }
 
-bool Tokenizer::_MakeUrary(
+bool Tokenizer::_MakeUnary(
 	Token& current,
 	const Token& last,
 	const char lastChar

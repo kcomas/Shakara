@@ -224,7 +224,7 @@ namespace ShakaraTest
 				);
 			}
 
-			TEST_METHOD(TokenizeUraryIncrementDecrement)
+			TEST_METHOD(TokenizeUnaryIncrementDecrement)
 			{
 				std::string code = R"(
 					count++
@@ -268,7 +268,7 @@ namespace ShakaraTest
 				);
 			}
 
-			TEST_METHOD(TokenizeUraryArithmeticEqual)
+			TEST_METHOD(TokenizeUnaryArithmeticEqual)
 			{
 				std::string code = R"(
 					count += 1

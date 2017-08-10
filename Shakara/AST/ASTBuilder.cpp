@@ -705,8 +705,6 @@ void ASTBuilder::_ParseVariableIncrementDecrement(
 	// Move on for the next call
 	(*next)++;
 
-	// TODO: Throw an error if the type is incorrect
-
 	// Create the right hand of the binary operation
 	//
 	// Initialize this to one as we are only incrementing
@@ -793,8 +791,6 @@ void ASTBuilder::_ParseVariableArithmeticAssignment(
 	// Move on for the next call
 	(*next)++;
 
-	// TODO: Throw an error if the type is incorrect
-
 	Node* value = _GetPassableNode(
 		tokens,
 		*next,
@@ -859,10 +855,10 @@ void ASTBuilder::_ParseFunctionDefinition(
 			break;
 		}
 
+		// Function definition arguments can only contain
+		// identifiers!
 		if (tokens[*next].type != TokenType::IDENTIFIER)
 		{
-			// TODO: Throw an error here!
-			
 			(*next)++;
 
 			continue;
@@ -1187,7 +1183,6 @@ void ASTBuilder::_ParseBinaryOperation(
 		op = NodeType::GREATEREQUAL_COMPARISON;
 		break;
 	default:
-		// TODO: Throw an error
 		break;
 	}
 

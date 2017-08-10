@@ -44,14 +44,14 @@ namespace Shakara
 		void _SetTokenFromValue(Token* token, const std::string& value);
 
 		/**
-		 * Tries to make a urary operator from the current
+		 * Tries to make a unary operator from the current
 		 * token, the last token, and the last character
 		 * moved through.
 		 *
-		 * Returns true if a urary was found and changed, 
+		 * Returns true if a unary was found and changed, 
 		 * or false otherwise.
 		 */
-		bool _MakeUrary(
+		bool _MakeUnary(
 			Token& current,
 			const Token& last,
 			const char lastChar

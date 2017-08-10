@@ -207,10 +207,6 @@ void Interpreter::Execute(
 			// type
 			if (returnable->Type() == NodeType::IDENTIFIER)
 			{
-				// TODO: Find a way to get this 
-				// actually i could use the mark delete
-				// flag as true for all of these, and then
-				// do it that way
 				*returned = currentScope.Search(static_cast<IdentifierNode*>(returnable)->Value())->Clone();
 				(*returned)->MarkDelete(true);
 			}
@@ -305,43 +301,7 @@ void Interpreter::_ExecuteAssign(
 			m_errorHandle();
 	}
 
-	// TODO: Add an error if the value is nullptr still
-
 	scope.Insert(identifier, value);
-
-	/*if (find)
-	{
-		if (find->second->Type() != NodeType::FUNCTION)
-			delete find->second;
-
-		m_globals[identifier] = value;
-	}
-	else
-	{
-		// If we should prefer the local scope, then
-		// we try and find the identifier inside of
-		// the scope map, if not found, it is added
-		// to, otherwise, it is modified.
-		//
-		// If we don't prefer local, add to the global
-		// map
-		if (local)
-		{
-			find = scope.find(identifier);
-
-			if (find != scope.end())
-			{
-				if (find->second->Type() != NodeType::FUNCTION)
-					delete find->second;
-
-				scope[identifier] = value;
-			}
-			else
-				scope.insert(std::make_pair(identifier, value));
-		}
-		else
-			m_globals.insert(std::make_pair(identifier, value));
-	}*/
 }
 
 void Interpreter::_ExecuteIfStatement(
