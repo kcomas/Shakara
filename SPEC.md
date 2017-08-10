@@ -243,3 +243,5 @@ the following example:
 
 This could be extended to many more applications to simplify code for
 input and output significantly.
+
+C++, for instance, has this sort of construct, with the `<<` and `>>`, but this is more hacky than anything, as it piggybacks off of the bitshift operators. With a dedicated operator, there could be more possibilty for a feature such as this.
