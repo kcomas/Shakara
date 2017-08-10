@@ -38,25 +38,25 @@ in the language.
 
     fizzbuzz = (number)
     {
-	      buzzer = ""
+        buzzer = ""
 
-	      if (number % 3 == 0)
-		        buzzer += "Fizz"
+        if (number % 3 == 0)
+            buzzer += "Fizz"
 
-	      if (number % 5 == 0)
-		        buzzer += "Buzz"
+        if (number % 5 == 0)
+            buzzer += "Buzz"
 
-	      if (buzzer == "")
-		        return number
-
-	      return buzzer
+        if (buzzer == "")
+            return number
+			
+        return buzzer
     }
 
     count = 1
 
     while (count <= 100)
     {
-	      print(fizzbuzz(count), " ")
+        print(fizzbuzz(count), " ")
 
         count++
     }
