@@ -6,52 +6,53 @@ namespace Shakara
 	{
 		enum class NodeType : uint8_t
 		{
-			ROOT                    = 0x00,
-			ASSIGN                  = 0x01,
+			ROOT                     = 0x00,
+			ASSIGN                   = 0x01,
 
-			BINARY_OP               = 0x02,
-			LOGICAL_OP              = 0x03,
-			FUNCTION                = 0x04,
-			CALL                    = 0x05,
-			IF_STATEMENT            = 0x06,
-			WHILE_STATEMENT         = 0x07,
+			BINARY_OP                = 0x02,
+			LOGICAL_OP               = 0x03,
+			FUNCTION                 = 0x04,
+			CALL                     = 0x05,
+			IF_STATEMENT             = 0x06,
+			WHILE_STATEMENT          = 0x07,
 
 			/**
 			 * Type Nodes
 			 */
-			INTEGER                 = 0x08,
-			DECIMAL                 = 0x09,
-			IDENTIFIER              = 0x0A,
-			STRING                  = 0x0B,
-			BOOLEAN                 = 0x0C,
-			ARRAY                   = 0x0D,
+			INTEGER                  = 0x08,
+			DECIMAL                  = 0x09,
+			IDENTIFIER               = 0x0A,
+			ARRAY_ELEMENT_IDENTIFIER = 0x0B,
+			STRING                   = 0x0C,
+			BOOLEAN                  = 0x0D,
+			ARRAY                    = 0x0E,
 
 			/**
 			 * Arithmetic Types for
 			 * binary operations
 			 */
-			ADD                     = 0x0E,
-			SUBTRACT                = 0x0F,
-			MULTIPLY                = 0x10,
-			DIVIDE                  = 0x11,
-			MODULUS                 = 0x12,
+			ADD                      = 0x0F,
+			SUBTRACT                 = 0x10,
+			MULTIPLY                 = 0x11,
+			DIVIDE                   = 0x12,
+			MODULUS                  = 0x13,
 
 			/**
 			 * Logical Types
 			 */
-			EQUAL_COMPARISON        = 0x13,
-			NOTEQUAL_COMPARISON     = 0x14,
-			LESS_COMPARISON         = 0x15,
-			GREATER_COMPARISON      = 0x16,
-			LESSEQUAL_COMPARISON    = 0x17,
-			GREATEREQUAL_COMPARISON = 0x18,
-			AND                     = 0x19,
-			OR                      = 0x1A,
+			EQUAL_COMPARISON         = 0x14,
+			NOTEQUAL_COMPARISON      = 0x15,
+			LESS_COMPARISON          = 0x16,
+			GREATER_COMPARISON       = 0x17,
+			LESSEQUAL_COMPARISON     = 0x18,
+			GREATEREQUAL_COMPARISON  = 0x19,
+			AND                      = 0x1A,
+			OR                       = 0x1B,
 		
 			/**
 			 * Special Node Types (return, etc)
 			 */
-			RETURN                  = 0x1B
+			RETURN                   = 0x1C
 		};
 
 		static inline bool _LogicalOperation(const NodeType& type)

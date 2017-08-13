@@ -17,6 +17,7 @@
 #include "Nodes/ASTIfStatementNode.hpp"
 #include "Nodes/ASTWhileStatementNode.hpp"
 #include "Nodes/ASTArrayNode.hpp"
+#include "Nodes/ASTArrayElementIdentifier.hpp"
 
 #include "../Tokenizer/TokenizerTypes.hpp"
 
@@ -107,10 +108,7 @@ bool ASTBuilder::_BuildIndividualNode(
 			}
 		}
 		// For either increment or decrement variables
-		else if (
-			tokens[index + 1].type == TokenType::INCREMENT ||
-			tokens[index + 1].type == TokenType::DECREMENT
-		)
+		else if (_IsIncrementDecrementToken(tokens[index + 1].type))
 		{
 			_ParseVariableIncrementDecrement(
 				root,
@@ -123,12 +121,7 @@ bool ASTBuilder::_BuildIndividualNode(
 		}
 		// For any assignment arithmetic operators
 		// such as += or -=
-		else if (
-			tokens[index + 1].type == TokenType::PLUS_EQUAL     ||
-			tokens[index + 1].type == TokenType::MINUS_EQUAL    ||
-			tokens[index + 1].type == TokenType::MULTIPLY_EQUAL ||
-			tokens[index + 1].type == TokenType::DIVIDE_EQUAL
-		)
+		else if (_IsArithmeticAssignmentToken(tokens[index + 1].type))
 		{
 			_ParseVariableArithmeticAssignment(
 				root,
@@ -150,6 +143,81 @@ bool ASTBuilder::_BuildIndividualNode(
 			);
 
 			return true;
+		}
+		// Check if this could be an array element assignment
+		//
+		// This will create a node for the index of the array
+		// that will then be passed to the parse method if it
+		// turns out to be an array assignment
+		else if (tokens[index + 1].type == TokenType::LEFT_BRACKET)
+		{
+			ArrayElementIdentifierNode* arrayElement = new ArrayElementIdentifierNode();
+			arrayElement->Type(NodeType::ARRAY_ELEMENT_IDENTIFIER);
+			
+			_ParseArrayElementIdentifierNode(
+				arrayElement,
+				tokens,
+				index,
+				next
+			);
+
+			// If we have a value and the next token is a right bracket,
+			// and the token after that is an equal sign, start parsing
+			// the array element assignment
+			if (
+				arrayElement                                            &&
+				tokens[*next].type        == TokenType::RIGHT_BRACKET   &&
+				tokens[(*next) + 1].type  == TokenType::EQUAL
+			)
+			{
+				_ParseVariableAssignment(
+					root,
+					tokens,
+					(*next) + 1,
+					next,
+					arrayElement
+				);
+
+				return true;
+			}
+			else if (
+				arrayElement                                     &&
+				tokens[*next].type == TokenType::RIGHT_BRACKET   &&
+				_IsIncrementDecrementToken(tokens[(*next) + 1].type)
+			)
+			{
+				_ParseVariableIncrementDecrement(
+					root,
+					tokens,
+					(*next) + 1,
+					next,
+					arrayElement
+				);
+
+				return true;
+			}
+			else if (
+				arrayElement                                     &&
+				tokens[*next].type == TokenType::RIGHT_BRACKET   &&
+				_IsArithmeticAssignmentToken(tokens[(*next) + 1].type)
+			)
+			{
+				_ParseVariableArithmeticAssignment(
+					root,
+					tokens,
+					(*next) + 1,
+					next,
+					arrayElement
+				);
+
+				return true;
+			}
+			else
+			{
+				delete arrayElement;
+
+				return false;
+			}
 		}
 	}
 	// Parse this print call as a function call
@@ -229,7 +297,8 @@ void ASTBuilder::_ParseVariableAssignment(
 	RootNode*           root,
 	std::vector<Token>& tokens,
 	size_t              index,
-	ptrdiff_t*			next
+	ptrdiff_t*			next,
+	Node*               identifier
 )
 {
 	// Start by setting the next token
@@ -241,22 +310,24 @@ void ASTBuilder::_ParseVariableAssignment(
 	AssignmentNode* assignment = new AssignmentNode();
 	assignment->Type(NodeType::ASSIGN);
 
-	// Set the identifier using the
-	// index as the first node
-	IdentifierNode* identifier = new IdentifierNode();
-	identifier->Type(NodeType::IDENTIFIER);
+	// Create a new identifier from the
+	// first token if we don't already
+	// have an identifier
+	if (!identifier)
+	{
+		identifier = new IdentifierNode();
+		identifier->Type(NodeType::IDENTIFIER);
 
-	identifier->Value(tokens[(*next)].value);
+		static_cast<IdentifierNode*>(identifier)->Value(tokens[(*next)].value);
+	
+		// Move onto the equal sign
+		(*next)++;
+	}
 
 	identifier->Parent(assignment);
-
 	assignment->Identifier(identifier);
 
-	(*next)++;
-
-	// Move on to the equal sign, which
-	// should just be skipped, as we already
-	// know that this is an assignment
+	// Move past the equal sign
 	(*next)++;
 
 	Node* value = _GetPassableNode(
@@ -665,7 +736,8 @@ void ASTBuilder::_ParseVariableIncrementDecrement(
 	RootNode*           root,
 	std::vector<Token>& tokens,
 	size_t              index,
-	ptrdiff_t*          next
+	ptrdiff_t*          next,
+	Node*               identifier
 )
 {
 	// Start by setting the next token
@@ -682,19 +754,42 @@ void ASTBuilder::_ParseVariableIncrementDecrement(
 	AssignmentNode* assignment = new AssignmentNode();
 	assignment->Type(NodeType::ASSIGN);
 
-	// Create the IdentifierNode to assign the
-	// increment or deincrement to
-	IdentifierNode* identifier = new IdentifierNode();
-	identifier->Type(NodeType::IDENTIFIER);
+	// Create an identifier node if one is not
+	// already created
+	if (!identifier)
+	{
+		identifier = new IdentifierNode();
+		identifier->Type(NodeType::IDENTIFIER);
 
-	identifier->Value(tokens[(*next)].value);
+		static_cast<IdentifierNode*>(identifier)->Value(tokens[(*next)].value);
+
+		(*next)++;
+	}
 
 	identifier->Parent(assignment);
-
 	assignment->Identifier(identifier);
 
-	(*next)++;
+	// Create a separate increment decrement operation
+	// for this variable decrement increment
+	BinaryOperation* operation = _ParseIncrementDecrementOperation(
+		identifier,
+		tokens,
+		next
+	);
 
+	operation->Parent(assignment);
+
+	assignment->Assignment(operation);
+
+	root->Insert(assignment);
+}
+
+BinaryOperation* ASTBuilder::_ParseIncrementDecrementOperation(
+	Node*               identifier,
+	std::vector<Token>& tokens,
+	ptrdiff_t*          next
+)
+{
 	// Create the binary operation for this
 	// operation
 	BinaryOperation* operation = new BinaryOperation();
@@ -707,8 +802,7 @@ void ASTBuilder::_ParseVariableIncrementDecrement(
 	// node recursively deletes, and will try to
 	// double delete if I use the same identifier
 	// instance
-	IdentifierNode* leftIdentifier = new IdentifierNode(*identifier);
-	leftIdentifier->Type(NodeType::IDENTIFIER);
+	Node* leftIdentifier = identifier->Clone();
 	leftIdentifier->Parent(operation);
 
 	operation->LeftHand(leftIdentifier);
@@ -718,7 +812,7 @@ void ASTBuilder::_ParseVariableIncrementDecrement(
 	// correct binary operation
 	if (tokens[*next].type == TokenType::INCREMENT)
 		operation->Operation(NodeType::ADD);
-	else if(tokens[*next].type == TokenType::DECREMENT)
+	else if (tokens[*next].type == TokenType::DECREMENT)
 		operation->Operation(NodeType::SUBTRACT);
 
 	// Move on for the next call
@@ -735,26 +829,23 @@ void ASTBuilder::_ParseVariableIncrementDecrement(
 
 	operation->RightHand(one);
 
-	operation->Parent(assignment);
-
-	assignment->Assignment(operation);
-
-	root->Insert(assignment);
+	return operation;
 }
 
 void ASTBuilder::_ParseVariableArithmeticAssignment(
 	RootNode*           root,
 	std::vector<Token>& tokens,
 	size_t              index,
-	ptrdiff_t*          next
+	ptrdiff_t*          next,
+	Node*               identifier
 )
 {
 	// Start by setting the next token
 	// as the index passed in
 	*next = index;
 
-	// Create an assignment node to increment
-	// the variable
+	// Create an assignment node to preform a
+	// math operation on the variable
 	//
 	// The reason for using an AssignmentNode
 	// as opposed to a new node type for these
@@ -762,19 +853,40 @@ void ASTBuilder::_ParseVariableArithmeticAssignment(
 	AssignmentNode* assignment = new AssignmentNode();
 	assignment->Type(NodeType::ASSIGN);
 
-	// Create the IdentifierNode to assign the
-	// increment or deincrement to
-	IdentifierNode* identifier = new IdentifierNode();
-	identifier->Type(NodeType::IDENTIFIER);
+	// Create an identifier if one is not passed
+	if (!identifier)
+	{
+		identifier = new IdentifierNode();
+		identifier->Type(NodeType::IDENTIFIER);
 
-	identifier->Value(tokens[(*next)].value);
+		static_cast<IdentifierNode*>(identifier)->Value(tokens[(*next)].value);
+
+		(*next)++;
+	}
 
 	identifier->Parent(assignment);
-
 	assignment->Identifier(identifier);
 
-	(*next)++;
+	// Create the binary operation for this
+	// operation
+	BinaryOperation* operation = _ParseArithmeticAssignmentOperation(
+		identifier,
+		tokens,
+		next
+	);
+	operation->Parent(assignment);
 
+	assignment->Assignment(operation);
+
+	root->Insert(assignment);
+}
+
+BinaryOperation* ASTBuilder::_ParseArithmeticAssignmentOperation(
+	Node*               identifier,
+	std::vector<Token>& tokens,
+	ptrdiff_t*          next
+)
+{
 	// Create the binary operation for this
 	// operation
 	BinaryOperation* operation = new BinaryOperation();
@@ -787,8 +899,7 @@ void ASTBuilder::_ParseVariableArithmeticAssignment(
 	// node recursively deletes, and will try to
 	// double delete if I use the same identifier
 	// instance
-	IdentifierNode* leftIdentifier = new IdentifierNode(*identifier);
-	leftIdentifier->Type(NodeType::IDENTIFIER);
+	Node* leftIdentifier = identifier->Clone();
 	leftIdentifier->Parent(operation);
 
 	operation->LeftHand(leftIdentifier);
@@ -818,9 +929,7 @@ void ASTBuilder::_ParseVariableArithmeticAssignment(
 	value->Parent(operation);
 	operation->RightHand(value);
 
-	assignment->Assignment(operation);
-
-	root->Insert(assignment);
+	return operation;
 }
 
 void ASTBuilder::_ParseFunctionDefinition(
@@ -985,113 +1094,15 @@ Node* ASTBuilder::_GetPassableNode(
 		IsBinaryType(tokens[(*next) + 1].type)
 	)
 	{
-		BinaryOperation* operation = new BinaryOperation();
-		operation->Type(NodeType::BINARY_OP);
-
-		_ParseBinaryOperation(
-			operation,
+		return _GetPassableBinaryOperation(
 			tokens,
-			*next,
-			next
+			index,
+			next,
+			ignoreLogic
 		);
-
-		// Try and find comparison operations inside
-		// of this binary operation
-		Node* currentHand = operation;
-
-		while (currentHand->Type() == NodeType::BINARY_OP)
-		{
-			BinaryOperation* op = static_cast<BinaryOperation*>(currentHand);
-
-			// If we've found something that we need to convert to have
-			// a correct left and right hand, start doing it
-			if (
-				_LogicalOperation(op->Operation()) &&
-				op->Parent()          != nullptr   &&
-				op->Parent()->Type()  == NodeType::BINARY_OP
-			)
-			{
-				// The new operation to return
-				BinaryOperation* overall = new BinaryOperation();
-				overall->Type(NodeType::BINARY_OP);
-				overall->Operation(op->Operation());
-
-				// The overall operation to perform for the
-				// left of the comparison, will also depend
-				// on if there are binary operation parents
-				// to the parent
-				BinaryOperation* leftOp = new BinaryOperation();
-				leftOp->Parent(overall);
-				leftOp->Type(NodeType::BINARY_OP);
-				leftOp->LeftHand(static_cast<BinaryOperation*>(op->Parent())->GetLeftHand()->Clone());
-				
-				// Since we cloned it, delete the original node
-				delete static_cast<BinaryOperation*>(op->Parent())->GetLeftHand();
-
-				leftOp->GetLeftHand()->Parent(leftOp);
-				leftOp->Operation(static_cast<BinaryOperation*>(op->Parent())->Operation());
-				leftOp->RightHand(op->GetLeftHand()->Clone());
-
-				// Again, delete the original node
-				delete op->GetLeftHand();
-				op->LeftHand(nullptr);
-
-				leftOp->GetRightHand()->Parent(leftOp);
-
-				overall->LeftHand(leftOp);
-				overall->RightHand(op->GetRightHand()->Clone());
-
-				// Delete the final cloned node
-				delete op->GetRightHand();
-				op->RightHand(nullptr);
-
-				overall->GetRightHand()->Parent(overall);
-
-				if (op->Parent()->Parent() && op->Parent()->Parent()->Type() == NodeType::BINARY_OP)
-				{
-					BinaryOperation* parentOp = static_cast<BinaryOperation*>(op->Parent()->Parent());
-					overall->Parent(overall);
-
-					parentOp->RightHand(overall);
-
-					delete op;
-
-					break;
-				}
-				else
-				{
-					delete op;
-
-					return overall;
-				}
-			}
-
-			currentHand = op->GetRightHand();
-		}
-
-		if (
-			static_cast<size_t>((*next)) < tokens.size() &&
-			(tokens[*next].type == TokenType::AND || tokens[*next].type == TokenType::OR) &&
-			!ignoreLogic
-		)
-		{
-			delete operation;
-
-			Node* logical = _ParseLogicalOperation(
-				tokens,
-				index,
-				next
-			);
-
-			return logical;
-		}
-
-		return operation;
 	}
-	else if (
-		static_cast<size_t>((*next) + 1) < tokens.size() &&
-		tokens[(*next)].type == TokenType::LEFT_BRACKET
-	)
+	// Parse as an array definition
+	else if (tokens[(*next)].type == TokenType::LEFT_BRACKET)
 	{
 		ArrayNode* arrayNode = new ArrayNode();
 		arrayNode->Type(NodeType::ARRAY);
@@ -1122,9 +1133,60 @@ Node* ASTBuilder::_GetPassableNode(
 
 		return arrayNode;
 	}
-	// There is no other nested operation to do,
-	// now check if this type is a identifier or
-	// a number of sorts
+	// Parse as an array access
+	else if (
+		static_cast<size_t>((*next) + 1) < tokens.size()  &&
+		tokens[(*next)].type     == TokenType::IDENTIFIER &&
+		tokens[(*next + 1)].type == TokenType::LEFT_BRACKET
+	)
+	{
+		ArrayElementIdentifierNode* identifier = new ArrayElementIdentifierNode();
+		identifier->Type(NodeType::ARRAY_ELEMENT_IDENTIFIER);
+
+		_ParseArrayElementIdentifierNode(
+			identifier,
+			tokens,
+			*next,
+			next
+		);
+
+		// Move past the right bracket
+		if (tokens[*next].type == TokenType::RIGHT_BRACKET)
+			(*next)++;
+
+		// Parse this element identifier as being
+		// a part of a binary operation
+		if (
+			static_cast<size_t>((*next)) < tokens.size() &&
+			IsBinaryType(tokens[*next].type)
+		)
+			return _GetPassableBinaryOperation(
+				tokens,
+				*next,
+				next,
+				ignoreLogic,
+				identifier
+			);
+
+		if (
+			static_cast<size_t>((*next)) < tokens.size() &&
+			(tokens[*next].type == TokenType::AND || tokens[*next].type == TokenType::OR) &&
+			!ignoreLogic
+		)
+		{
+			delete identifier;
+
+			Node* logical = _ParseLogicalOperation(
+				tokens,
+				index,
+				next
+			);
+
+			return logical;
+		}
+
+		return identifier;
+	}
 	else if (
 		tokens[*next].type == TokenType::IDENTIFIER ||
 		tokens[*next].type == TokenType::INTEGER    ||
@@ -1164,11 +1226,125 @@ Node* ASTBuilder::_GetPassableNode(
 	return nullptr;
 }
 
+Node* ASTBuilder::_GetPassableBinaryOperation(
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next,
+	bool                ignoreLogic,
+	Node*               leftHand
+)
+{
+	BinaryOperation* operation = new BinaryOperation();
+	operation->Type(NodeType::BINARY_OP);
+
+	_ParseBinaryOperation(
+		operation,
+		tokens,
+		*next,
+		next,
+		leftHand
+	);
+
+	// Try and find comparison operations inside
+	// of this binary operation
+	Node* currentHand = operation;
+
+	while (currentHand->Type() == NodeType::BINARY_OP)
+	{
+		BinaryOperation* op = static_cast<BinaryOperation*>(currentHand);
+
+		// If we've found something that we need to convert to have
+		// a correct left and right hand, start doing it
+		if (
+			_LogicalOperation(op->Operation()) &&
+			op->Parent() != nullptr   &&
+			op->Parent()->Type() == NodeType::BINARY_OP
+		)
+		{
+			// The new operation to return
+			BinaryOperation* overall = new BinaryOperation();
+			overall->Type(NodeType::BINARY_OP);
+			overall->Operation(op->Operation());
+
+			// The overall operation to perform for the
+			// left of the comparison, will also depend
+			// on if there are binary operation parents
+			// to the parent
+			BinaryOperation* leftOp = new BinaryOperation();
+			leftOp->Parent(overall);
+			leftOp->Type(NodeType::BINARY_OP);
+			leftOp->LeftHand(static_cast<BinaryOperation*>(op->Parent())->GetLeftHand()->Clone());
+
+			// Since we cloned it, delete the original node
+			delete static_cast<BinaryOperation*>(op->Parent())->GetLeftHand();
+
+			leftOp->GetLeftHand()->Parent(leftOp);
+			leftOp->Operation(static_cast<BinaryOperation*>(op->Parent())->Operation());
+			leftOp->RightHand(op->GetLeftHand()->Clone());
+
+			// Again, delete the original node
+			delete op->GetLeftHand();
+			op->LeftHand(nullptr);
+
+			leftOp->GetRightHand()->Parent(leftOp);
+
+			overall->LeftHand(leftOp);
+			overall->RightHand(op->GetRightHand()->Clone());
+
+			// Delete the final cloned node
+			delete op->GetRightHand();
+			op->RightHand(nullptr);
+
+			overall->GetRightHand()->Parent(overall);
+
+			if (op->Parent()->Parent() && op->Parent()->Parent()->Type() == NodeType::BINARY_OP)
+			{
+				BinaryOperation* parentOp = static_cast<BinaryOperation*>(op->Parent()->Parent());
+				overall->Parent(overall);
+
+				parentOp->RightHand(overall);
+
+				delete op;
+
+				break;
+			}
+			else
+			{
+				delete op;
+
+				return overall;
+			}
+		}
+
+		currentHand = op->GetRightHand();
+	}
+
+	if (
+		static_cast<size_t>((*next)) < tokens.size() &&
+		(tokens[*next].type == TokenType::AND || tokens[*next].type == TokenType::OR) &&
+		!ignoreLogic
+	)
+	{
+		delete operation;
+
+		Node* logical = _ParseLogicalOperation(
+			tokens,
+			index,
+			next
+		);
+
+		return logical;
+	}
+
+	return operation;
+}
+
 void ASTBuilder::_ParseBinaryOperation(
 	BinaryOperation*    operation,
 	std::vector<Token>& tokens,
 	size_t              index,
-	ptrdiff_t*          next
+	ptrdiff_t*          next,
+	Node*               leftHand
 )
 {
 	// Start by setting the next token
@@ -1178,18 +1354,24 @@ void ASTBuilder::_ParseBinaryOperation(
 	// Determine the type of node
 	// to create for the left hand
 	// side of the operation
-	Node* leftHand = nullptr;
-	_CreateSingleNodeFromToken(
-		&leftHand,
-		tokens[index]
-	);
+	if (!leftHand)
+	{
+		_CreateSingleNodeFromToken(
+			&leftHand,
+			tokens[*next]
+		);
+		
+		// Move to the op type from
+		// the converted node
+		(*next)++;
+	}
 
+	leftHand->Parent(operation);
 	operation->LeftHand(leftHand);
 
 	// Now get the operation type
-	(*next)++;
 	const TokenType& type = tokens[*next].type;
-	NodeType         op = NodeType::ROOT;
+	NodeType         op   = NodeType::ROOT;
 
 	switch (type)
 	{
@@ -1324,7 +1506,40 @@ void ASTBuilder::_ParseArrayNode(
 	}
 }
 
-inline void ASTBuilder::_CreateSingleNodeFromToken(
+void ASTBuilder::_ParseArrayElementIdentifierNode(
+	ArrayElementIdentifierNode* identifier,
+	std::vector<Token>&         tokens,
+	size_t                      index,
+	ptrdiff_t*                  next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+	
+	// First, parse the identifier string
+	// for the array element node
+	//
+	// Since we only call this if the first token
+	// is an identifier, just grab the token value
+	identifier->ArrayIdentifier(tokens[*next].value);
+
+	// Move on past the identifier and the left
+	// bracket to get to the index
+	(*next)++;
+	(*next)++;
+
+	// Now parse the index as a passable node
+	Node* element = _GetPassableNode(
+		tokens,
+		*next,
+		next
+	);
+
+	identifier->Index(element);
+}
+
+void ASTBuilder::_CreateSingleNodeFromToken(
 	Node**       node,
 	const Token& token
 )
@@ -1379,4 +1594,19 @@ inline void ASTBuilder::_CreateSingleNodeFromToken(
 	default:
 		break;
 	}
+}
+
+bool ASTBuilder::_IsIncrementDecrementToken(const TokenType& type)
+{
+	return (type == TokenType::INCREMENT) ||
+		   (type == TokenType::DECREMENT);
+}
+
+bool ASTBuilder::_IsArithmeticAssignmentToken(const TokenType& type)
+{
+	return (type == TokenType::PLUS_EQUAL)     ||
+		   (type == TokenType::MINUS_EQUAL)    ||
+		   (type == TokenType::MULTIPLY_EQUAL) ||
+		   (type == TokenType::DIVIDE_EQUAL)   ||
+		   (type == TokenType::MODULUS_EQUAL);
 }

@@ -4,6 +4,8 @@ namespace Shakara
 {
 	struct Token;
 
+	enum class TokenType : uint8_t;
+
 	namespace AST
 	{
 		class RootNode;
@@ -13,6 +15,8 @@ namespace Shakara
 		class FunctionCall;
 
 		class BinaryOperation;
+
+		class ArrayElementIdentifierNode;
 
 		class ArrayNode;
 
@@ -65,7 +69,8 @@ namespace Shakara
 				RootNode*           root,
 				std::vector<Token>& tokens,
 				size_t              index,
-				ptrdiff_t*          next
+				ptrdiff_t*          next,
+				Node*               identifier=nullptr
 			);
 
 			/**
@@ -145,6 +150,17 @@ namespace Shakara
 				RootNode*           root,
 				std::vector<Token>& tokens,
 				size_t              index,
+				ptrdiff_t*          next,
+				Node*               identifier=nullptr
+			);
+
+			/**
+			 * Grabs the binary operation node
+			 * used for increment/decrement operators
+			 */
+			BinaryOperation* _ParseIncrementDecrementOperation(
+				Node*               identifier,
+				std::vector<Token>& tokens,
 				ptrdiff_t*          next
 			);
 
@@ -159,6 +175,17 @@ namespace Shakara
 				RootNode*           root,
 				std::vector<Token>& tokens,
 				size_t              index,
+				ptrdiff_t*          next,
+				Node*               identifier=nullptr
+			);
+
+			/**
+			 * Parse the binary operation made for arithmetic
+			 * assignments.
+			 */
+			BinaryOperation* _ParseArithmeticAssignmentOperation(
+				Node*               identifier,
+				std::vector<Token>& tokens,
 				ptrdiff_t*          next
 			);
 
@@ -194,6 +221,23 @@ namespace Shakara
 			);
 
 			/**
+			 * Creates a passable binary operation for any
+			 * kind of node that requires one.
+			 *
+			 * This is uses for array elements as well.
+			 *
+			 * Able to pass in an optional left hand to be
+			 * used as a special left hand node.
+			 */
+			Node* _GetPassableBinaryOperation(
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next,
+				bool                ignoreLogic = false,
+				Node*               leftHand    = nullptr
+			);
+
+			/**
 			 * Parses a binary operation
 			 * from the current index
 			 * until an end is found
@@ -202,7 +246,8 @@ namespace Shakara
 				BinaryOperation*    operation,
 				std::vector<Token>& tokens,
 				size_t              index,
-				ptrdiff_t*          next
+				ptrdiff_t*          next,
+				Node*               leftHand=nullptr
 			);
 
 			/**
@@ -210,16 +255,30 @@ namespace Shakara
 			 * array node, either fixed or not
 			 */
 			void _ParseArrayNode(
-				ArrayNode*    operation,
+				ArrayNode*          operation,
 				std::vector<Token>& tokens,
 				size_t              index,
 				ptrdiff_t*          next
 			);
 
-			inline void _CreateSingleNodeFromToken(
+			/**
+			 * Parses an array access into an ArrayElementIdentifierNode
+			 */
+			void _ParseArrayElementIdentifierNode(
+				ArrayElementIdentifierNode* identifier,
+				std::vector<Token>&         tokens,
+				size_t                      index,
+				ptrdiff_t*                  next
+			);
+
+			void _CreateSingleNodeFromToken(
 				Node**        node,
 				const Token& token
 			);
+
+			bool _IsIncrementDecrementToken(const TokenType& type);
+
+			bool _IsArithmeticAssignmentToken(const TokenType& type);
 
 		};
 	}
