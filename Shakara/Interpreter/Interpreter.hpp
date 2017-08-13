@@ -26,6 +26,10 @@ namespace Shakara
 		class BooleanNode;
 
 		class IfStatement;
+		
+		class ArrayNode;
+
+		class ArrayElementIdentifierNode;
 	}
 
 	/**
@@ -164,6 +168,15 @@ namespace Shakara
 		void _ExecuteFunctionDeclaration(AST::FunctionDeclaration* declaration);
 
 		/**
+		 * Take in an array definition and evaluate all of the nodes within
+		 * and subsequently store it in the passed in scope.
+		 */
+		void _ExecuteArrayDeclaration(
+			AST::AssignmentNode* arrayAssignment,
+			Scope&               scope
+		);
+
+		/**
 		 * Take in a function call node, and attempt to
 		 * assign parameters and run the function.
 		 *
@@ -222,6 +235,15 @@ namespace Shakara
 		AST::BooleanNode* _ExecuteLogicalOperation(
 			AST::BinaryOperation* operation,
 			Scope&                scope
+		);
+
+		/**
+		 * Grab a single node from an array element
+		 * identifier
+		 */
+		AST::Node* _GetArrayElement(
+			AST::ArrayElementIdentifierNode* identifier,
+			Scope&                           scope
 		);
 
 	};

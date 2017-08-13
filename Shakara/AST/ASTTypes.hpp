@@ -55,7 +55,7 @@ namespace Shakara
 			RETURN                   = 0x1C
 		};
 
-		static inline bool _LogicalOperation(const NodeType& type)
+		static inline bool IsLogicalOperation(const NodeType& type)
 		{
 			return (type == NodeType::EQUAL_COMPARISON)        ||
 				   (type == NodeType::NOTEQUAL_COMPARISON)     ||
@@ -67,7 +67,7 @@ namespace Shakara
 				   (type == NodeType::OR);
 		}
 
-		static inline const char* _GetNodeTypeName(const NodeType& type)
+		static inline const char* GetNodeTypeName(const NodeType& type)
 		{
 			switch (type)
 			{

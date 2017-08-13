@@ -1057,9 +1057,47 @@ namespace ShakaraTest
 					static_cast<uint8_t>(root[0]->Type())
 				);
 
+				// Check to see if the assignment has an identifier of an
+				// array element identifier, and a binary expression as the
+				// assignment
+				Shakara::AST::AssignmentNode* firstAssignment = static_cast<Shakara::AST::AssignmentNode*>(root[0]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ARRAY_ELEMENT_IDENTIFIER),
+					static_cast<uint8_t>(firstAssignment->GetIdentifier()->Type())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(firstAssignment->GetAssignment()->Type())
+				);
+
+				// This should also be an assignment, but to an array element
+				// with a binary operation as the assigned node
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
 					static_cast<uint8_t>(root[1]->Type())
+				);
+
+				Shakara::AST::AssignmentNode* secondAssignment = static_cast<Shakara::AST::AssignmentNode*>(root[1]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ARRAY_ELEMENT_IDENTIFIER),
+					static_cast<uint8_t>(secondAssignment->GetIdentifier()->Type())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::BINARY_OP),
+					static_cast<uint8_t>(secondAssignment->GetAssignment()->Type())
+				);
+
+				// Make sure that the binary operation's left hand is the
+				// element identifier
+				Shakara::AST::BinaryOperation* operation = static_cast<Shakara::AST::BinaryOperation*>(secondAssignment->GetAssignment());
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ARRAY_ELEMENT_IDENTIFIER),
+					static_cast<uint8_t>(operation->GetLeftHand()->Type())
 				);
 
 				Assert::AreEqual(

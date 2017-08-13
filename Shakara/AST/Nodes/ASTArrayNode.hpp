@@ -32,6 +32,18 @@ namespace Shakara
 				return *this;
 			}
 
+			inline ArrayNode& Set(size_t index, Node* node)
+			{
+				node->Parent(this);
+
+				if (m_elements[index])
+					delete m_elements[index];
+
+				m_elements[index] = node;
+
+				return *this;
+			}
+
 			inline ArrayNode& Fixed(bool state)
 			{
 				m_fixed = state;

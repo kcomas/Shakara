@@ -1070,6 +1070,20 @@ Node* ASTBuilder::_GetPassableNode(
 			next
 		);
 
+		// Parse a binary operation if a op token
+		// is found
+		if (
+			static_cast<size_t>((*next)) < tokens.size() &&
+			IsBinaryType(tokens[*next].type)
+		)
+			return _GetPassableBinaryOperation(
+				tokens,
+				*next,
+				next,
+				ignoreLogic,
+				call
+			);
+
 		if (
 			static_cast<size_t>((*next)) < tokens.size() &&
 			(tokens[*next].type == TokenType::AND || tokens[*next].type == TokenType::OR) &&
@@ -1256,7 +1270,7 @@ Node* ASTBuilder::_GetPassableBinaryOperation(
 		// If we've found something that we need to convert to have
 		// a correct left and right hand, start doing it
 		if (
-			_LogicalOperation(op->Operation()) &&
+			IsLogicalOperation(op->Operation()) &&
 			op->Parent() != nullptr   &&
 			op->Parent()->Type() == NodeType::BINARY_OP
 		)

@@ -16,6 +16,8 @@
 #include "../AST/Nodes/ASTBooleanNode.hpp"
 #include "../AST/Nodes/ASTIfStatementNode.hpp"
 #include "../AST/Nodes/ASTWhileStatementNode.hpp"
+#include "../AST/Nodes/ASTArrayNode.hpp"
+#include "../AST/Nodes/ASTArrayElementIdentifier.hpp"
 
 using namespace Shakara;
 using namespace Shakara::AST;
@@ -131,10 +133,16 @@ void Interpreter::Execute(
 		{
 			AssignmentNode* assign = static_cast<AssignmentNode*>(node);
 
-			_ExecuteAssign(
-				assign,
-				currentScope
-			);
+			if (assign->GetAssignment()->Type() == NodeType::ARRAY)
+				_ExecuteArrayDeclaration(
+					assign,
+					currentScope
+				);
+			else
+				_ExecuteAssign(
+					assign,
+					currentScope
+				);
 		}
 		else if (node->Type() == NodeType::IF_STATEMENT)
 		{
@@ -207,7 +215,8 @@ void Interpreter::Execute(
 			else if (
 				returnable->Type() == NodeType::INTEGER ||
 				returnable->Type() == NodeType::DECIMAL ||
-				returnable->Type() == NodeType::STRING
+				returnable->Type() == NodeType::STRING  ||
+				returnable->Type() == NodeType::BOOLEAN
 			)
 			{
 				*returned = returnable->Clone();
@@ -226,7 +235,14 @@ void Interpreter::Execute(
 			else if (returnable->Type() == NodeType::CALL)
 			{
 				*returned = _ExecuteFunction(static_cast<FunctionCall*>(returnable), currentScope);
-				(*returned)->MarkDelete(false);
+				(*returned)->MarkDelete(true);
+			}
+			else if (returnable->Type() == NodeType::ARRAY)
+				*returned = returnable->Clone();
+			else if (returnable->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+			{
+				*returned = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(returnable), currentScope)->Clone();
+				(*returned)->MarkDelete(true);
 			}
 
 			// Since this is a return statement within a
@@ -242,9 +258,17 @@ void Interpreter::_ExecuteAssign(
 	Scope&          scope
 )
 {
-	// Grab the identifier string for getting (or adding)
-	// to the map
-	const std::string identifier = static_cast<IdentifierNode*>(assign->GetIdentifier())->Value();
+	std::string identifier = "";
+	// Grab the identifier depending on whether
+	// it is an array element or not
+	//
+	// If it isn't grab a string for the whole
+	// ident, if it is, grab a string for the
+	// array ident, and then go from there
+	if (assign->GetIdentifier()->Type() == NodeType::IDENTIFIER)
+		identifier = static_cast<IdentifierNode*>(assign->GetIdentifier())->Value();
+	else if (assign->GetIdentifier()->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		identifier = static_cast<ArrayElementIdentifierNode*>(assign->GetIdentifier())->ArrayIdentifier();
 
 	// Try and see if the identifier exists in the globals
 	// map, if so, remove the previous value and add a new
@@ -274,13 +298,15 @@ void Interpreter::_ExecuteAssign(
 	else if (assign->GetAssignment()->Type() == NodeType::STRING)
 		value = static_cast<StringNode*>(assign->GetAssignment())->Clone();
 	else if (assign->GetAssignment()->Type() == NodeType::BOOLEAN)
-		value = static_cast<StringNode*>(assign->GetAssignment())->Clone();
+		value = static_cast<BooleanNode*>(assign->GetAssignment())->Clone();
 	else if (assign->GetAssignment()->Type() == NodeType::BINARY_OP)
 		value = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(assign->GetAssignment()), scope);
 	else if (assign->GetAssignment()->Type() == NodeType::LOGICAL_OP)
 		value = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(assign->GetAssignment()), scope);
 	else if (assign->GetAssignment()->Type() == NodeType::CALL)
 		value = _ExecuteFunction(static_cast<FunctionCall*>(assign->GetAssignment()), scope);
+	else if (assign->GetAssignment()->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		value = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(assign->GetAssignment()), scope)->Clone();
 
 	if (!value)
 	{
@@ -289,13 +315,89 @@ void Interpreter::_ExecuteAssign(
 		if (assign->GetAssignment()->Type() == NodeType::CALL)
 			std::cerr << "Tried to use a function's return value as an assignment, when the function did not return!" << std::endl;
 		else
-			std::cerr << "Type: " << _GetNodeTypeName(assign->GetAssignment()->Type()) << std::endl;
+			std::cerr << "Type: " << GetNodeTypeName(assign->GetAssignment()->Type()) << std::endl;
 	
 		if (m_errorHandle)
 			m_errorHandle();
 	}
 
-	scope.Insert(identifier, value);
+	// If this is just a plain identifier, just
+	// insert into the scope, otherwise, try
+	// and set an element in an array
+	if (assign->GetIdentifier()->Type() == NodeType::IDENTIFIER)
+		scope.Insert(identifier, value);
+	else if (assign->GetIdentifier()->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+	{
+		Node* arrayNode = scope.Search(identifier);
+
+		if (!arrayNode)
+		{
+			std::cerr << "Interpreter Error! Undeclared identifier \"" << identifier << "\"!";
+
+			if (m_errorHandle)
+				m_errorHandle();
+		}
+
+		if (arrayNode->Type() != NodeType::ARRAY)
+		{
+			std::cerr << "Interpreter Error! Cannot assign to a array element with a non-array type!" << std::endl;
+			std::cerr << "Actual type: " << GetNodeTypeName(arrayNode->Type()) << std::endl;
+		}
+
+		// Grab the array index
+		// Now, evaluate the index used
+		// for the identifier
+		Node* index = static_cast<ArrayElementIdentifierNode*>(assign->GetIdentifier())->Index()->Clone();
+
+		if (index->Type() == NodeType::IDENTIFIER)
+			index = scope.Search(static_cast<IdentifierNode*>(index)->Value())->Clone();
+		else if (index->Type() == NodeType::BINARY_OP)
+			index = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(index), scope);
+		else if (index->Type() == NodeType::LOGICAL_OP)
+			index = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(index), scope);
+		else if (index->Type() == NodeType::CALL)
+			index = _ExecuteFunction(static_cast<FunctionCall*>(index), scope);
+		else if (index->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+			index = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(index), scope)->Clone();
+
+		if (!index)
+		{
+			std::cerr << "Interpreter Error! Undefined index for array element assignment!" << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+		}
+
+		if (index->Type() != NodeType::INTEGER)
+		{
+			std::cerr << "Interpreter Error! Index for array element assignment must be an integer!" << std::endl;
+			std::cerr << "Actual Type: " << GetNodeTypeName(index->Type());
+
+			delete index;
+
+			if (m_errorHandle)
+				m_errorHandle();
+		}
+
+		// Now, grab the index as a size_t
+		int32_t arrIndex = static_cast<IntegerNode*>(index)->Value();
+
+		// The index node is no longer needed, delete
+		delete index;
+
+		// Check if the index would be out of bounds
+		if (arrIndex < 0 || static_cast<size_t>(arrIndex) >= static_cast<ArrayNode*>(arrayNode)->Size())
+		{
+			std::cerr << "Interpreter Error! Array index out of bounds!" << std::endl;
+			std::cerr << "Index: " << arrIndex << "; Size: " << static_cast<ArrayNode*>(arrayNode)->Size() << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+		}
+
+		// Finally, set the node accordingly
+		static_cast<ArrayNode*>(arrayNode)->Set(arrIndex, value);
+	}
 }
 
 void Interpreter::_ExecuteIfStatement(
@@ -322,7 +424,7 @@ void Interpreter::_ExecuteIfStatement(
 	if (condition->Type() != NodeType::BOOLEAN)
 	{
 		std::cerr << "Interpreter Error! If statement's condition must be of a boolean return!" << std::endl;
-		std::cerr << "Current condition type: " << _GetNodeTypeName(condition->Type()) << std::endl;
+		std::cerr << "Current condition type: " << GetNodeTypeName(condition->Type()) << std::endl;
 
 		if (m_errorHandle)
 			m_errorHandle();
@@ -371,7 +473,7 @@ void Interpreter::_ExecuteWhileStatement(
 	if (condition->Type() != NodeType::BOOLEAN)
 	{
 		std::cerr << "Interpreter Error! If statement's condition must be of a boolean return!" << std::endl;
-		std::cerr << "Current condition type: " << _GetNodeTypeName(condition->Type()) << std::endl;
+		std::cerr << "Current condition type: " << GetNodeTypeName(condition->Type()) << std::endl;
 
 		if (m_errorHandle)
 			m_errorHandle();
@@ -413,7 +515,7 @@ void Interpreter::_ExecuteWhileStatement(
 		if (condition->Type() != NodeType::BOOLEAN)
 		{
 			std::cerr << "Interpreter Error! If statement's condition must be of a boolean return!" << std::endl;
-			std::cerr << "Current condition type: " << _GetNodeTypeName(condition->Type()) << std::endl;
+			std::cerr << "Current condition type: " << GetNodeTypeName(condition->Type()) << std::endl;
 
 			if (m_errorHandle)
 				m_errorHandle();
@@ -430,6 +532,97 @@ void Interpreter::_ExecuteFunctionDeclaration(FunctionDeclaration* declaration)
 	const std::string identifier = static_cast<IdentifierNode*>(declaration->Identifier())->Value();
 
 	m_globalScope.Insert(identifier, declaration);
+}
+
+void Interpreter::_ExecuteArrayDeclaration(
+	AST::AssignmentNode* arrayAssignment,
+	Scope&               scope
+)
+{
+	// Grab the identifier string for adding the
+	// array to the scope
+	const std::string identifier = static_cast<IdentifierNode*>(arrayAssignment->GetIdentifier())->Value();
+
+	// Grab the ArrayNode to be taken from
+	ArrayNode* arrayNode = static_cast<ArrayNode*>(arrayAssignment->GetAssignment());
+
+	// Also, create a new array node to store
+	// all of the evaluated portions of the
+	// declaration
+	ArrayNode* finalArray = new ArrayNode();
+	finalArray->Type(NodeType::ARRAY);
+
+	// First, check if the array is fixed
+	// and if so, evaluate the capacity
+	// node and set it for the final array
+	if (arrayNode->Fixed())
+	{
+		Node* capacity = arrayNode->Capacity();
+
+		if (capacity->Type() == NodeType::IDENTIFIER)
+			capacity = scope.Search(static_cast<IdentifierNode*>(capacity)->Value())->Clone();
+		// TODO: Implement array accessor grabbing
+		//else if (capacity->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		//	capacity = scope.Search(static_cast<IdentifierNode*>(capacity)->Value())->Clone();
+		else if (capacity->Type() == NodeType::BINARY_OP)
+			capacity = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(capacity), scope);
+		else if (capacity->Type() == NodeType::LOGICAL_OP)
+			capacity = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(capacity), scope);
+		else if (capacity->Type() == NodeType::CALL)
+			capacity = _ExecuteFunction(static_cast<FunctionCall*>(capacity), scope);
+	
+		// Make sure that the capacity is an integer
+		if (!capacity || capacity->Type() != NodeType::INTEGER)
+		{
+			std::cerr << "Interpreter Error! Fixed-array capacity must be an integer!" << std::endl;
+			
+			if (capacity)
+				std::cerr << "Actual Type: " << GetNodeTypeName(capacity->Type()) << std::endl;
+		
+			delete finalArray;
+
+			if (m_errorHandle)
+				m_errorHandle();
+		}
+
+		finalArray->Fixed(true);
+		finalArray->Capacity(capacity);
+	}
+
+	// Now, if there are elements, iterate through
+	for (size_t index = 0; index < arrayNode->Size(); index++)
+	{
+		Node* element = (*arrayNode)[index];
+
+		// Convert types if required
+		// For an identifier, search
+		// through the scope and convert
+		if (element->Type() == NodeType::IDENTIFIER)
+			element = scope.Search(static_cast<IdentifierNode*>(element)->Value())->Clone();
+		// For any singluar type, clone
+		// and store
+		else if (
+			element->Type() == NodeType::INTEGER ||
+			element->Type() == NodeType::DECIMAL ||
+			element->Type() == NodeType::STRING ||
+			element->Type() == NodeType::BOOLEAN
+		)
+			element = element->Clone();
+		else if (element->Type() == NodeType::BINARY_OP)
+			element = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(element), scope);
+		else if (element->Type() == NodeType::LOGICAL_OP)
+			element = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(element), scope);
+		else if (element->Type() == NodeType::CALL)
+			element = _ExecuteFunction(static_cast<FunctionCall*>(element), scope);
+		else if (element->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+			element = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(element), scope)->Clone();
+
+		// Now we can push the element to the array
+		finalArray->Insert(element);
+	}
+
+	// Insert into the scope
+	scope.Insert(identifier, finalArray);
 }
 
 Node* Interpreter::_ExecuteFunction(
@@ -489,7 +682,7 @@ Node* Interpreter::_ExecuteFunction(
 		if (signature->Type() != NodeType::IDENTIFIER)
 		{
 			std::cerr << "Interpreter Error! Arguments within a function signature cannot be anything but a IDENTIFIER." << std::endl;
-			std::cerr << "Recieved type of: " << _GetNodeTypeName(signature->Type()) << std::endl;
+			std::cerr << "Recieved type of: " << GetNodeTypeName(signature->Type()) << std::endl;
 		
 			if (m_errorHandle)
 				m_errorHandle();
@@ -643,6 +836,21 @@ void Interpreter::_ExecutePrint(
 			if (result->MarkedForDeletion())
 				delete result;
 		}
+		else if (argument->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		{
+			// Grab the temporary operation result
+			Node* result = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(argument), scope);
+
+			if (!result)
+			{
+				std::cerr << "Interpreter Error! Array element does not exist!" << std::endl;
+
+				if (m_errorHandle)
+					m_errorHandle();
+			}
+
+			_PrintTypedNode(result);
+		}
 		else
 			_PrintTypedNode(argument);
 	}
@@ -686,7 +894,7 @@ void Interpreter::_PrintTypedNode(Node* node)
 	}
 	default:
 	{
-		m_output << _GetNodeTypeName(node->Type());
+		m_output << GetNodeTypeName(node->Type());
 
 		break;
 	}
@@ -746,6 +954,11 @@ Node* Interpreter::_ExecuteType(
 
 		delete value;
 	}
+	else if (argType == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+	{
+		Node* value = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(arg), scope);
+		argType = value->Type();
+	}
 
 	// Grab the single argument, and grab
 	// the string for it, then subsequently
@@ -753,7 +966,7 @@ Node* Interpreter::_ExecuteType(
 	StringNode* stringRep = new StringNode();
 	stringRep->Type(NodeType::STRING);
 
-	stringRep->Value(_GetNodeTypeName(argType));
+	stringRep->Value(GetNodeTypeName(argType));
 
 	return stringRep;
 }
@@ -777,6 +990,8 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		leftHand = _ExecuteFunction(static_cast<FunctionCall*>(leftHand), scope);
 	else if (leftHand->Type() == NodeType::BINARY_OP)
 		leftHand = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(leftHand), scope);
+	else if (leftHand->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		leftHand = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(leftHand), scope);
 	// For now, check if the left hand type is not a
 	// operatable type, such as a string or an
 	// integer, and if not, throw an error
@@ -802,6 +1017,8 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		rightHand = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(rightHand), scope);
 	else if (rightHand->Type() == NodeType::CALL)
 		rightHand = _ExecuteFunction(static_cast<FunctionCall*>(rightHand), scope);
+	else if (rightHand->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		rightHand = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(rightHand), scope);
 	// Do the same as with the left hand, check if it is not
 	// an operatable type, and if so throw an error
 	else if (
@@ -819,7 +1036,7 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		return nullptr;
 	}
 
-	bool isComparison = _LogicalOperation(operation->Operation());
+	bool isComparison = IsLogicalOperation(operation->Operation());
 
 	// Now, determine what type to use for the result
 	// If either of the sides of the operation are a
@@ -867,8 +1084,11 @@ Node* Interpreter::_ExecuteBinaryOperation(
 	else
 	{
 		std::cerr << "Interpreter Error! Mismatched type for operation." << std::endl;
-		std::cerr << "Left-hand type: " << _GetNodeTypeName(leftHand->Type()) << ";";
-		std::cerr << " Right-hand type: " << _GetNodeTypeName(rightHand->Type()) << std::endl;
+		std::cerr << "Left-hand type: " << GetNodeTypeName(leftHand->Type()) << ";";
+		std::cerr << " Right-hand type: " << GetNodeTypeName(rightHand->Type()) << std::endl;
+
+		delete leftHand;
+		delete rightHand;
 
 		if (m_errorHandle)
 			m_errorHandle();
@@ -961,6 +1181,9 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		{
 			std::cerr << "Interpreter Error! Cannot subtract a string from a string!" << std::endl;
 
+			delete leftHand;
+			delete rightHand;
+
 			if (m_errorHandle)
 				m_errorHandle();
 
@@ -1004,6 +1227,9 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		else if (result->Type() == NodeType::STRING)
 		{
 			std::cerr << "Interpreter Error! Cannot multply a string by a string!" << std::endl;
+
+			delete leftHand;
+			delete rightHand;
 
 			if (m_errorHandle)
 				m_errorHandle();
@@ -1226,7 +1452,7 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		default:
 		{
 			std::cerr << "Interpreter Error! Less operator not supported for type used." << std::endl;
-			std::cerr << "Type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+			std::cerr << "Type: " << GetNodeTypeName(leftHand->Type()) << std::endl;
 
 			if (m_errorHandle)
 				m_errorHandle();
@@ -1266,7 +1492,7 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		default:
 		{
 			std::cerr << "Interpreter Error! Greater operator not supported for type used." << std::endl;
-			std::cerr << "Type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+			std::cerr << "Type: " << GetNodeTypeName(leftHand->Type()) << std::endl;
 
 			if (m_errorHandle)
 				m_errorHandle();
@@ -1306,7 +1532,7 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		default:
 		{
 			std::cerr << "Interpreter Error! Less equal operator not supported for type used." << std::endl;
-			std::cerr << "Type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+			std::cerr << "Type: " << GetNodeTypeName(leftHand->Type()) << std::endl;
 
 			if (m_errorHandle)
 				m_errorHandle();
@@ -1346,7 +1572,7 @@ Node* Interpreter::_ExecuteBinaryOperation(
 		default:
 		{
 			std::cerr << "Interpreter Error! Greater equal operator not supported for type used." << std::endl;
-			std::cerr << "Type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+			std::cerr << "Type: " << GetNodeTypeName(leftHand->Type()) << std::endl;
 
 			if (m_errorHandle)
 				m_errorHandle();
@@ -1360,7 +1586,7 @@ Node* Interpreter::_ExecuteBinaryOperation(
 	default:
 	{
 		std::cerr << "Interpreter Error! Unrecognized operation type!" << std::endl;
-		std::cerr << "Operation type: " << _GetNodeTypeName(operation->Operation()) << std::endl;
+		std::cerr << "Operation type: " << GetNodeTypeName(operation->Operation()) << std::endl;
 
 		if (m_errorHandle)
 			m_errorHandle();
@@ -1392,12 +1618,14 @@ BooleanNode* Interpreter::_ExecuteLogicalOperation(
 		leftHand = _ExecuteFunction(static_cast<FunctionCall*>(leftHand), scope);
 	else if (leftHand->Type() == NodeType::BINARY_OP)
 		leftHand = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(leftHand), scope);
+	else if (leftHand->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		leftHand = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(leftHand), scope);
 	// For now, make sure that the left hand side is a
 	// boolean to check with
 	else if (leftHand->Type() != NodeType::BOOLEAN)
 	{
 		std::cerr << "Interpreter Error! Unsupported or recognized type in left hand of logical operation!" << std::endl;
-		std::cerr << "Actual type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+		std::cerr << "Actual type: " << GetNodeTypeName(leftHand->Type()) << std::endl;
 
 		if (m_errorHandle)
 			m_errorHandle();
@@ -1409,7 +1637,7 @@ BooleanNode* Interpreter::_ExecuteLogicalOperation(
 	if (leftHand->Type() != NodeType::BOOLEAN)
 	{
 		std::cerr << "Interpreter Error! Non-boolean type in left hand of logical operation!" << std::endl;
-		std::cerr << "Actual type: " << _GetNodeTypeName(leftHand->Type()) << std::endl;
+		std::cerr << "Actual type: " << GetNodeTypeName(leftHand->Type()) << std::endl;
 
 		if (m_errorHandle)
 			m_errorHandle();
@@ -1438,12 +1666,14 @@ BooleanNode* Interpreter::_ExecuteLogicalOperation(
 		rightHand = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(rightHand), scope);
 	else if (rightHand->Type() == NodeType::LOGICAL_OP)
 		rightHand = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(rightHand), scope);
+	else if (rightHand->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		rightHand = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(rightHand), scope);
 	// For now, check if the right hand type is at least
 	// a boolean for checking
 	else if (rightHand->Type() != NodeType::BOOLEAN)
 	{
 		std::cerr << "Interpreter Error! Unsupported or recognized type in right hand of logical operation!" << std::endl;
-		std::cerr << "Actual type: " << _GetNodeTypeName(rightHand->Type()) << std::endl;
+		std::cerr << "Actual type: " << GetNodeTypeName(rightHand->Type()) << std::endl;
 
 		if (m_errorHandle)
 			m_errorHandle();
@@ -1455,7 +1685,7 @@ BooleanNode* Interpreter::_ExecuteLogicalOperation(
 	if (rightHand->Type() != NodeType::BOOLEAN)
 	{
 		std::cerr << "Interpreter Error! Non-boolean type in right hand of logical operation!" << std::endl;
-		std::cerr << "Actual type: " << _GetNodeTypeName(rightHand->Type()) << std::endl;
+		std::cerr << "Actual type: " << GetNodeTypeName(rightHand->Type()) << std::endl;
 
 		if (m_errorHandle)
 			m_errorHandle();
@@ -1508,4 +1738,89 @@ BooleanNode* Interpreter::_ExecuteLogicalOperation(
 	}
 
 	return nullptr;
+}
+
+AST::Node* Interpreter::_GetArrayElement(
+	AST::ArrayElementIdentifierNode* identifier,
+	Scope&                           scope
+)
+{
+	// First, try to grab the array
+	// from the string identifier
+	const std::string arrayIdent = identifier->ArrayIdentifier();
+
+	// Try and find this array
+	Node* arrayNode = scope.Search(arrayIdent);
+
+	if (!arrayNode)
+	{
+		std::cerr << "Interpreter Error! Undeclared identifier \"" << arrayIdent << "\"!";
+
+		if (m_errorHandle)
+			m_errorHandle();
+	
+		return nullptr;
+	}
+
+	if (arrayNode->Type() != NodeType::ARRAY)
+	{
+		std::cerr << "Interpreter Error! Cannot use array access syntax on a non array!" << std::endl;
+		std::cerr << "Actual type: " << GetNodeTypeName(arrayNode->Type()) << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// Now, evaluate the index used
+	// for the identifier
+	Node* index = identifier->Index()->Clone();
+
+	if (index->Type() == NodeType::IDENTIFIER)
+		index = scope.Search(static_cast<IdentifierNode*>(index)->Value())->Clone();
+	else if (index->Type() == NodeType::BINARY_OP)
+		index = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(index), scope);
+	else if (index->Type() == NodeType::LOGICAL_OP)
+		index = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(index), scope);
+	else if (index->Type() == NodeType::CALL)
+		index = _ExecuteFunction(static_cast<FunctionCall*>(index), scope);
+	else if (index->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		index = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(index), scope)->Clone();
+
+	if (!index)
+	{
+		std::cerr << "Interpreter Error! Undefined index for array access!" << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	if (index->Type() != NodeType::INTEGER)
+	{
+		std::cerr << "Interpreter Error! Index for array access must be an integer!" << std::endl;
+		std::cerr << "Actual Type: " << GetNodeTypeName(index->Type());
+
+		delete index;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// Now, grab the index as a size_t
+	int32_t arrIndex = static_cast<IntegerNode*>(index)->Value();
+
+	// The index node is no longer needed, delete
+	delete index;
+
+	// Check if the size is within bounds
+	if (arrIndex < 0 || static_cast<size_t>(arrIndex) >= static_cast<ArrayNode*>(arrayNode)->Size())
+	{
+		std::cerr << "Interpreter Error! Array index out of bounds!" << std::endl;
+		std::cerr << "Index: " << arrIndex << "; Size: " << static_cast<ArrayNode*>(arrayNode)->Size() << std::endl;
+	
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// Finally, return the actual node
+	return (*static_cast<ArrayNode*>(arrayNode))[arrIndex];
 }
