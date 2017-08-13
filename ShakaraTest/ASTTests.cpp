@@ -939,6 +939,87 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(ASTBuildArrayDefines)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					fixed_array = [size]
+
+					dynamic_array = [] { 1, 2 }
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				// There should only be two children in
+				// the root node, the definition node
+				Assert::AreEqual(
+					static_cast<size_t>(2),
+					static_cast<size_t>(root.Children())
+				);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[0]->Type())
+				);
+
+				// Check the first assignment
+				Shakara::AST::AssignmentNode* assignFirst = static_cast<Shakara::AST::AssignmentNode*>(root[0]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ARRAY),
+					static_cast<uint8_t>(assignFirst->GetAssignment()->Type())
+				);
+
+				// Check that the array is fixed
+				Shakara::AST::ArrayNode* firstArray = static_cast<Shakara::AST::ArrayNode*>(assignFirst->GetAssignment());
+
+				Assert::IsTrue(firstArray->Fixed());
+
+				// Make sure that the capacity is a identifier
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::IDENTIFIER),
+					static_cast<uint8_t>(firstArray->Capacity()->Type())
+				);
+
+				// Check the second assignment of a dynamic
+				// array
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ASSIGN),
+					static_cast<uint8_t>(root[1]->Type())
+				);
+
+				// Check the first assignment
+				Shakara::AST::AssignmentNode* assignSecond = static_cast<Shakara::AST::AssignmentNode*>(root[1]);
+
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::AST::NodeType::ARRAY),
+					static_cast<uint8_t>(assignSecond->GetAssignment()->Type())
+				);
+
+				// Check that the array is fixed
+				Shakara::AST::ArrayNode* secondArray = static_cast<Shakara::AST::ArrayNode*>(assignSecond->GetAssignment());
+
+				Assert::IsFalse(secondArray->Fixed());
+
+				// Check if we have two elements
+				Assert::AreEqual(
+					static_cast<size_t>(2),
+					secondArray->Size()
+				);
+			}
+
 		};
 	}
 }

@@ -14,6 +14,8 @@ namespace Shakara
 
 		class BinaryOperation;
 
+		class ArrayNode;
+
 		/**
 		 * Simple AST implementation for Shakara.
 		 */
@@ -198,6 +200,17 @@ namespace Shakara
 			 */
 			void _ParseBinaryOperation(
 				BinaryOperation*    operation,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
+			 * Parses an array definition into an
+			 * array node, either fixed or not
+			 */
+			void _ParseArrayNode(
+				ArrayNode*    operation,
 				std::vector<Token>& tokens,
 				size_t              index,
 				ptrdiff_t*          next

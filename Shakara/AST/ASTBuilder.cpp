@@ -16,6 +16,7 @@
 #include "Nodes/ASTBooleanNode.hpp"
 #include "Nodes/ASTIfStatementNode.hpp"
 #include "Nodes/ASTWhileStatementNode.hpp"
+#include "Nodes/ASTArrayNode.hpp"
 
 #include "../Tokenizer/TokenizerTypes.hpp"
 
@@ -938,21 +939,11 @@ Node* ASTBuilder::_GetPassableNode(
 	// as the index passed in
 	*next = index;
 	
-	// Start off by checking if there is a binary operation
-	//
-	// Check if there is a token after the current token, and
-	// check if it is a arithmetic type.
-	//
-	// If it is, build a BinaryOperation, otherwise, get the
-	// single typed node.
-	//
-	// Also for each of these nodes, there is a potential that
-	// there could be a logical operation that would be skipped
-	//
-	// Just to be safe, afterwards (if able) the next token is
-	// checked to see if it is an AND or OR, and if it is
-	// the last result is thrown away and a logical expression is
-	// parsed from the index
+	// Start with a check to see if the tokens would create a function call
+	// 
+	// Subsequently, check if it could be a binary operation of any type
+	// 
+	// After the binary operation, check if this could be an array definition
 	if (
 		static_cast<size_t>((*next) + 1) < tokens.size()  &&
 		(tokens[(*next)].type == TokenType::IDENTIFIER    ||
@@ -1097,6 +1088,40 @@ Node* ASTBuilder::_GetPassableNode(
 
 		return operation;
 	}
+	else if (
+		static_cast<size_t>((*next) + 1) < tokens.size() &&
+		tokens[(*next)].type == TokenType::LEFT_BRACKET
+	)
+	{
+		ArrayNode* arrayNode = new ArrayNode();
+		arrayNode->Type(NodeType::ARRAY);
+
+		_ParseArrayNode(
+			arrayNode,
+			tokens,
+			*next,
+			next
+		);
+
+		if (
+			static_cast<size_t>((*next)) < tokens.size() &&
+			(tokens[*next].type == TokenType::AND || tokens[*next].type == TokenType::OR) &&
+			!ignoreLogic
+		)
+		{
+			delete arrayNode;
+
+			Node* logical = _ParseLogicalOperation(
+				tokens,
+				index,
+				next
+			);
+
+			return logical;
+		}
+
+		return arrayNode;
+	}
 	// There is no other nested operation to do,
 	// now check if this type is a identifier or
 	// a number of sorts
@@ -1223,6 +1248,80 @@ void ASTBuilder::_ParseBinaryOperation(
 
 	value->Parent(operation);
 	operation->RightHand(value);
+}
+
+void ASTBuilder::_ParseArrayNode(
+	ArrayNode*          arrayNode,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
+	// Start by setting the next token
+	// as the index passed in
+	*next = index;
+
+	// Move on to the right bracket
+	// or any other type that could
+	// be there
+	(*next)++;
+
+	// If we actually have a non ending
+	// node here, parse as a passable
+	// node for a fixed size
+	if (tokens[*next].type != TokenType::RIGHT_BRACKET)
+	{
+		Node* capacity = _GetPassableNode(
+			tokens,
+			*next,
+			next
+		);
+
+		arrayNode->Fixed(true);
+		arrayNode->Capacity(capacity);
+	}
+
+	// Continue past the right bracket
+	(*next)++;
+
+	// If we don't have elements defined
+	// for the array, just return out
+	if (tokens[*next].type != TokenType::BEGIN_BLOCK)
+		return;
+
+	// Otherwise, we have to parse these
+	// elements, move on to the first
+	(*next)++;
+
+	// Parse this the same as say, a function
+	// call's arguments
+	//
+	// Move through each node until either the
+	// end is reached, or we run out of tokens
+	while (static_cast<size_t>((*next)) < tokens.size())
+	{
+		if (tokens[*next].type == TokenType::END_BLOCK)
+		{
+			(*next)++;
+
+			break;
+		}
+
+		if (tokens[*next].type == TokenType::ARG_SEPERATOR)
+		{
+			(*next)++;
+
+			continue;
+		}
+
+		Node* value = _GetPassableNode(
+			tokens,
+			*next,
+			next
+		);
+
+		arrayNode->Insert(value);
+	}
 }
 
 inline void ASTBuilder::_CreateSingleNodeFromToken(
