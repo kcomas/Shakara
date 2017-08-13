@@ -757,6 +757,47 @@ namespace ShakaraTest
 				);
 			}
 
+			TEST_METHOD(TokenizeArrayBrackets)
+			{
+				std::string statement = R"(
+					array = []
+				)";
+
+				std::stringstream stream(statement, std::ios::in);
+
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Make sure that we have three tokens
+				// for this test statement
+				Assert::AreEqual(static_cast<size_t>(4), tokens.size());
+
+				// Next, make sure that each token is
+				// the right type
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
+					static_cast<uint8_t>(tokens[0].type),
+					L"Incorrect token type! Expected IDENTIFIER!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::EQUAL),
+					static_cast<uint8_t>(tokens[1].type),
+					L"Incorrect token type! Expected EQUAL!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::LEFT_BRACKET),
+					static_cast<uint8_t>(tokens[2].type),
+					L"Incorrect token type! Expected LEFT_BRACKET!"
+				);
+				Assert::AreEqual(
+					static_cast<uint8_t>(Shakara::TokenType::RIGHT_BRACKET),
+					static_cast<uint8_t>(tokens[3].type),
+					L"Incorrect token type! Expected RIGHT_BRACKET!"
+				);
+			}
+
 		};
 	}
 }

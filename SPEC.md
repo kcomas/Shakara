@@ -8,7 +8,7 @@ Due to this being a toy project, it may
 be super insecure and prone to bugs.
 
 For features that may, or may not be, fleshed out,
-their titles will be italicized. Subsequently when
+their titles will be *italicized*. Subsequently when
 they are implemented, they will be unitalicized.
 
 ### Important Constructs
@@ -183,6 +183,66 @@ syntax:
 
 Like with the if statements, you may omit braces if a single statement
 is to be used in the loop.
+
+### *Arrays*
+
+Arrays are a necessary type for any programming language, what's currently
+in the air though is the syntax and form of these arrays. My thoughts are
+as follows.
+
+The syntax for arrays could look something like the following for definition:
+
+    array_name = [size] { elements }
+
+Which would create a fixed array with the following elements within.
+
+Elements would be specified with a comma between each separate element:
+
+    { element1, element2, element3, ... }
+
+Though, for instance, the elements portion can be omitted to look like this:
+
+    array_name = [size]
+
+Which creates a fixed size array that is empty.
+
+Though the reverse in my mind will be possible, the size could be omitted,
+either with or without the elements, to look like this:
+
+    array_name = [] { elements }
+
+For any of the types, the brackets would be required, but the above creates
+a dynamic array, with the elements specified, if specified.
+
+This may be odd for a dynamic language, to have a fixed size array, but I
+feel that this could be beneficial in the long run. For instance, there are
+many cases that you would want to enforce a fixed-size array, and in these
+instances, in other languages, you would ensure that the size does not exceed
+your maximum size in your own code. With a fixed size array, the interpreter
+could worry about this for you, cutting down on code necessary for this.
+In addition, fixed size arrays are helpful for overall memory usage, as you
+don't have to grow the array to accommodate for extra elements.
+
+Grabbing the length of the array would be used as a function, like in Python:
+
+    length(array_name)
+
+Arrays in Shakara are to be zero-based, and would be accessed like most C-like languages, as shown below:
+
+    array_name[index]
+
+### *Command Line Arguments*
+
+In many programs, you will need to, at some point, access the command line
+arguments that were passed to the interpreter. These parameters are exposed
+as an array, and can be accessed with the identifier `shk__cmd_args` (the `shk` prefix is used so that others can use the name `cmd_args`, I may go
+back on this though).
+
+Since it's an array, you can use `length(shk__cmd_args)` to grab the amount
+of arguments.
+
+The arguments array's first element will always start with the path of the
+Shakara file ran, and then go into the subsequent arguments.
 
 ### *Structs*
 

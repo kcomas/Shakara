@@ -22,56 +22,62 @@ namespace Shakara
 		DIVIDE                  = 0x05,
 		MODULUS                 = 0x06,
 		EQUAL                   = 0x07,
+
+		/**
+		 * Semantic types
+		 */
 		BEGIN_ARGS              = 0x08,
 		ARG_SEPERATOR           = 0x09,
 		END_ARGS                = 0x0A,
 		BEGIN_BLOCK             = 0x0B,
 		END_BLOCK               = 0x0C,
+		LEFT_BRACKET            = 0x0D,
+		RIGHT_BRACKET           = 0x0E,
 
 		/**
 		 * Type Tokens
 		 */
-		INTEGER                 = 0x0D,
-		DECIMAL                 = 0x0E,
-		STRING                  = 0x0F,
+		INTEGER                 = 0x0F,
+		DECIMAL                 = 0x10,
+		STRING                  = 0x11,
 
 		/**
 		 * Unary Tokens
 		 */
-		INCREMENT               = 0x10,
-		DECREMENT               = 0x11,
-		PLUS_EQUAL              = 0x12,
-		MINUS_EQUAL             = 0x13,
-		MULTIPLY_EQUAL          = 0x14,
-		DIVIDE_EQUAL            = 0x15,
-		MODULUS_EQUAL           = 0x16,
+		INCREMENT               = 0x12,
+		DECREMENT               = 0x13,
+		PLUS_EQUAL              = 0x14,
+		MINUS_EQUAL             = 0x15,
+		MULTIPLY_EQUAL          = 0x16,
+		DIVIDE_EQUAL            = 0x17,
+		MODULUS_EQUAL           = 0x18,
 
 		/**
 		 * Special Tokens (print, etc)
 		 */
-		TYPE                    = 0x17,
-		PRINT                   = 0x18,
-		RETURN                  = 0x19,
+		TYPE                    = 0x19,
+		PRINT                   = 0x1A,
+		RETURN                  = 0x1B,
 
 		/**
 		 * Boolean and Logical Tokens
 		 */
-		BOOLEAN                 = 0x1A,
-		AND                     = 0x1B,
-		OR                      = 0x1C,
-		NOT                     = 0x1D,
-		EQUAL_COMPARISON        = 0x1E,
-		NOTEQUAL_COMPARISON     = 0x1F,
-		LESS_COMPARISON         = 0x20,
-		GREATER_COMPARISON      = 0x21,
-		LESSEQUAL_COMPARISON    = 0x22,
-		GREATEREQUAL_COMPARISON = 0x23,
+		BOOLEAN                 = 0x1C,
+		AND                     = 0x1D,
+		OR                      = 0x1E,
+		NOT                     = 0x1F,
+		EQUAL_COMPARISON        = 0x20,
+		NOTEQUAL_COMPARISON     = 0x21,
+		LESS_COMPARISON         = 0x22,
+		GREATER_COMPARISON      = 0x23,
+		LESSEQUAL_COMPARISON    = 0x24,
+		GREATEREQUAL_COMPARISON = 0x25,
 
 		/**
 		 * Statements
 		 */
-		IF_STATEMENT            = 0x24,
-		WHILE_STATEMENT         = 0x25
+		IF_STATEMENT            = 0x26,
+		WHILE_STATEMENT         = 0x27
 	};
 
 	struct Token
