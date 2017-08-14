@@ -561,9 +561,8 @@ void Interpreter::_ExecuteArrayDeclaration(
 
 		if (capacity->Type() == NodeType::IDENTIFIER)
 			capacity = scope.Search(static_cast<IdentifierNode*>(capacity)->Value())->Clone();
-		// TODO: Implement array accessor grabbing
-		//else if (capacity->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
-		//	capacity = scope.Search(static_cast<IdentifierNode*>(capacity)->Value())->Clone();
+		else if (capacity->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+			capacity = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(capacity), scope)->Clone();
 		else if (capacity->Type() == NodeType::BINARY_OP)
 			capacity = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(capacity), scope);
 		else if (capacity->Type() == NodeType::LOGICAL_OP)
@@ -619,6 +618,21 @@ void Interpreter::_ExecuteArrayDeclaration(
 
 		// Now we can push the element to the array
 		finalArray->Insert(element);
+
+		// Make sure that we are not going over the
+		// capacity
+		int32_t capacityVal = static_cast<IntegerNode*>(finalArray->Capacity())->Value();
+
+		if (finalArray->Size() > static_cast<size_t>(capacityVal))
+		{
+			std::cerr << "Interpreter Error! Element count in array definition, \"" << identifier << "\" is over the fixed capacity!" << std::endl;
+			std::cerr << "Element count: " << finalArray->Size() << "; Capacity: " << capacityVal << std::endl;
+
+			delete finalArray;
+
+			if (m_errorHandle)
+				m_errorHandle();
+		}
 	}
 
 	// Insert into the scope

@@ -508,7 +508,7 @@ namespace ShakaraTest
 				// it into a stringstream
 				std::string code = R"(
 					potatoes = "Home-fried potatoes"
-					phrases = [] {
+					phrases = [4] {
 						"I don't eat no ham and eggs",
 						"'Cause they're high in cholesterol",
 						potatoes,
@@ -516,8 +516,7 @@ namespace ShakaraTest
 					}
 
 					phrases[3] = "Yes!"
-
-					count = 0
+					count      = 0
 
 					while (count < 4)
 					{
