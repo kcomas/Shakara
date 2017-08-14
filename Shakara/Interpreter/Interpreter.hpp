@@ -96,7 +96,22 @@ namespace Shakara
 			Scope*         scope=nullptr
 		);
 
+		/**
+		 * Append a single argument to this interpreter
+		 * before executing
+		 */
+		inline void AppendCommandArgument(const char* argument)
+		{
+			m_arguments.push_back(argument);
+		}
+
 	private:
+		/**
+		 * Arguments to be pushed off to the
+		 * Shakara file being interpreted.
+		 */
+		std::vector<const char*> m_arguments;
+
 		/**
 		 * Output stream used for printing
 		 */
@@ -245,6 +260,12 @@ namespace Shakara
 			AST::ArrayElementIdentifierNode* identifier,
 			Scope&                           scope
 		);
+
+		/**
+		 * Create an array instance for the command
+		 * arguments and insert it into global scope.
+		 */
+		void _CreateCommandArgumentsArray();
 
 	};
 }

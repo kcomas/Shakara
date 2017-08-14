@@ -231,7 +231,7 @@ Arrays in Shakara are to be zero-based, and would be accessed like most C-like l
 
     array_name[index]
 
-### *Command Line Arguments*
+### Command Line Arguments
 
 In many programs, you will need to, at some point, access the command line
 arguments that were passed to the interpreter. These parameters are exposed

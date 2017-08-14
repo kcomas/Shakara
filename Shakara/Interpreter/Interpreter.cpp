@@ -117,6 +117,11 @@ void Interpreter::Execute(
 {
 	Scope& currentScope = ((scope) ? *scope : m_globalScope);
 
+	// If we are in global scope, create the command arguments
+	// array
+	if (!scope)
+		_CreateCommandArgumentsArray();
+
 	// Go through each node in the AST and
 	// start executing
 	for (size_t index = 0; index < root->Children(); index++)
@@ -1837,4 +1842,43 @@ AST::Node* Interpreter::_GetArrayElement(
 
 	// Finally, return the actual node
 	return (*static_cast<ArrayNode*>(arrayNode))[arrIndex];
+}
+
+void Interpreter::_CreateCommandArgumentsArray()
+{
+	// Shrink the arguments vector before
+	// anything else
+	m_arguments.shrink_to_fit();
+
+	// Create the array node
+	ArrayNode* cmdArgsArray = new ArrayNode();
+	cmdArgsArray->Type(NodeType::ARRAY);
+
+	// Create the capacity for the array
+	IntegerNode* capacity = new IntegerNode();
+	capacity->Type(NodeType::INTEGER);
+
+	capacity->Value(false, m_arguments.size());
+
+	capacity->Parent(cmdArgsArray);
+
+	cmdArgsArray->Fixed(true);
+	cmdArgsArray->Capacity(capacity);
+
+	// Now, fill the array with the
+	// string nodes
+	for (size_t index = 0; index < m_arguments.size(); index++)
+	{
+		StringNode* argument = new StringNode();
+		argument->Type(NodeType::STRING);
+
+		argument->Value(m_arguments[index]);
+
+		cmdArgsArray->Insert(argument);
+	}
+
+	// Now, insert it into global scope with
+	// the reserved array name defined in
+	// the precompiled header
+	m_globalScope.Insert(SHAKARA_CMD_ARGS_NAME, cmdArgsArray);
 }

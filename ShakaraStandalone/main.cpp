@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 {
 	// We have one argument, and thus, we can interpret
 	// a file
-	if (argc == 2)
+	if (argc >= 2)
 	{
 		// Tokenize the file
 		std::vector<Shakara::Token> tokens;
@@ -34,6 +34,12 @@ int main(int argc, char* argv[])
 		interpreter.ErrorHandler([]() {
 			exit(0);
 		});
+
+		// Pass each argument into the interpreter
+		// starting at 1
+		for (size_t index = 1; index < static_cast<size_t>(argc); index++)
+			interpreter.AppendCommandArgument(argv[index]);
+
 		interpreter.Execute(&root);
 	}
 	else if (argc == 1)
