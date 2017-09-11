@@ -7,4 +7,5 @@ and provide the path to the file as the next argument.
 
 ### Examples Enclosed
 
-**buzz.shk**: A simple FizzBuzz program implemented in Shakara.
+**buzz.shk**:  A simple FizzBuzz program implemented in Shakara.
+**greet.shk**: A barebones greeting program implemented in Shakara. Uses a command argument and prints "Hello, <second argument>".

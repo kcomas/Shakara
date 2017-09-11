@@ -1,0 +1,4 @@
+argument_amt = amt(shk__cmd_args)
+
+if (argument_amt == 2)
+	print("Hello, ", shk__cmd_args[1], "!")
