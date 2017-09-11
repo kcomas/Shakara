@@ -216,15 +216,27 @@ namespace Shakara
 		);
 
 		/**
-		* Take in a special type function call and
-		* return the string representation of the
-		* type.
-		*
-		* The scope argument is used for functions
-		* to grab variables defined within.
-		*/
+		 * Take in a special type function call and
+		 * return the string representation of the
+		 * type.
+		 *
+		 * The scope argument is used for functions
+		 * to grab variables defined within.
+		 */
 		AST::Node* _ExecuteType(
 			AST::FunctionCall* print,
+			Scope&             scope
+		);
+
+		/**
+		 * Take in a special amount function call and
+		 * return the integer size of the collection.
+		 *
+		 * The scope argument is used for functions
+		 * to grab variables defined within.
+		 */
+		AST::Node* _ExecuteAmount(
+			AST::FunctionCall* amount,
 			Scope&             scope
 		);
 

@@ -518,6 +518,8 @@ namespace ShakaraTest
 					phrases[3] = "Yes!"
 					count      = 0
 
+					print(amt(phrases))
+
 					while (count < 4)
 					{
 						phrase = phrases[count]
@@ -548,7 +550,7 @@ namespace ShakaraTest
 
 				// Should be "I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!"
 				Assert::AreEqual(
-					"I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!",
+					"4I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!",
 					output.str().c_str()
 				);
 			}

@@ -58,26 +58,27 @@ namespace Shakara
 		TYPE                    = 0x19,
 		PRINT                   = 0x1A,
 		RETURN                  = 0x1B,
+		AMOUNT                  = 0x1C,
 
 		/**
 		 * Boolean and Logical Tokens
 		 */
-		BOOLEAN                 = 0x1C,
-		AND                     = 0x1D,
-		OR                      = 0x1E,
-		NOT                     = 0x1F,
-		EQUAL_COMPARISON        = 0x20,
-		NOTEQUAL_COMPARISON     = 0x21,
-		LESS_COMPARISON         = 0x22,
-		GREATER_COMPARISON      = 0x23,
-		LESSEQUAL_COMPARISON    = 0x24,
-		GREATEREQUAL_COMPARISON = 0x25,
+		BOOLEAN                 = 0x1D,
+		AND                     = 0x1E,
+		OR                      = 0x1F,
+		NOT                     = 0x20,
+		EQUAL_COMPARISON        = 0x21,
+		NOTEQUAL_COMPARISON     = 0x22,
+		LESS_COMPARISON         = 0x23,
+		GREATER_COMPARISON      = 0x24,
+		LESSEQUAL_COMPARISON    = 0x25,
+		GREATEREQUAL_COMPARISON = 0x26,
 
 		/**
 		 * Statements
 		 */
-		IF_STATEMENT            = 0x26,
-		WHILE_STATEMENT         = 0x27
+		IF_STATEMENT            = 0x27,
+		WHILE_STATEMENT         = 0x28
 	};
 
 	struct Token

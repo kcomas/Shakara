@@ -38,6 +38,9 @@ specifying any number with a decimal point.
 Strings in Shakara are specified by wrapping characters in two
 double quotes.
 
+The amount of characters in a string can be grabbed with the
+`amt` function, passing the string in as an argument.
+
 ##### Escape Sequences
 
 Shakara strings, like many other languages, support escape sequences
@@ -223,9 +226,9 @@ could worry about this for you, cutting down on code necessary for this.
 In addition, fixed size arrays are helpful for overall memory usage, as you
 don't have to grow the array to accommodate for extra elements.
 
-Grabbing the length of the array would be used as a function, like in Python:
+Grabbing the amount of items in the array would be used as a function, like in Python:
 
-    length(array_name)
+    amt(array_name)
 
 Arrays in Shakara are to be zero-based, and would be accessed like most C-like languages, as shown below:
 
@@ -238,7 +241,7 @@ arguments that were passed to the interpreter. These parameters are exposed
 as an array, and can be accessed with the identifier `shk__cmd_args` (the `shk` prefix is used so that others can use the name `cmd_args`, I may go
 back on this though).
 
-Since it's an array, you can use `length(shk__cmd_args)` to grab the amount
+Since it's an array, you can use `amt(shk__cmd_args)` to grab the amount
 of arguments.
 
 The arguments array's first element will always start with the path of the

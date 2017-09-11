@@ -665,6 +665,11 @@ Node* Interpreter::_ExecuteFunction(
 			call,
 			scope
 		);
+	else if (call->Flags() == CallFlags::AMOUNT)
+		return _ExecuteAmount(
+			call,
+			scope
+		);
 
 	// First, try and find the actual function
 	// declaration in the global map
@@ -932,7 +937,7 @@ Node* Interpreter::_ExecuteType(
 	// Make sure that only one argument is
 	// in the call, as you can only grab the
 	// type of one node
-	if (type->Arguments().size() == 1)
+	if (type->Arguments().size() != 1)
 	{
 		std::cerr << "Interpreter Error! The \"type\" call can only be used with one argument!" << std::endl;
 		std::cerr << "Argument amount: " << type->Arguments().size() << std::endl;
@@ -988,6 +993,107 @@ Node* Interpreter::_ExecuteType(
 	stringRep->Value(GetNodeTypeName(argType));
 
 	return stringRep;
+}
+
+Node* Interpreter::_ExecuteAmount(
+	FunctionCall* amount,
+	Scope&        scope
+)
+{
+	// Be sure that this is a print call
+	if (amount->Flags() != CallFlags::AMOUNT)
+		return nullptr;
+
+	// Make sure that only one argument is
+	// in the call, as you can only grab the
+	// type of one node
+	if (amount->Arguments().size() != 1)
+	{
+		std::cerr << "Interpreter Error! The \"amount\" call can only be used with one argument!" << std::endl;
+		std::cerr << "Argument amount: " << amount->Arguments().size() << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// If the argument is of a type, such
+	// as a call or a binary op, execute
+	// it, and then return the string
+	Node*     arg         = amount->Arguments()[0];
+	NodeType  currentType = arg->Type();
+	Node*     value       = arg;
+	bool      deleteNode  = false;
+
+	// First, grab the identifier value before
+	// trying to evaluate amounts
+	if (currentType == NodeType::IDENTIFIER)
+	{
+		value       = scope.Search(static_cast<IdentifierNode*>(arg)->Value());
+		currentType = value->Type();
+		deleteNode  = false;
+	}
+	
+	// Now, move onto trying to evaluate a binary
+	// operation or a function call, which must
+	// result in an array or a string
+	if (currentType == NodeType::BINARY_OP)
+	{
+		value       = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(arg), scope);
+		currentType = value->Type();
+		deleteNode  = true;
+	}
+	else if (currentType == NodeType::CALL)
+	{
+		value       = _ExecuteFunction(static_cast<FunctionCall*>(arg), scope);
+		currentType = value->Type();
+		deleteNode  = true;
+	}
+	else if (currentType == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+	{
+		value       = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(arg), scope);
+		currentType = value->Type();
+		deleteNode  = false;
+	}
+
+	// Now, check if the value is of a string
+	// or an array, and if so, return the amount
+	// node
+	if (currentType == NodeType::ARRAY)
+	{
+		ArrayNode* arr = static_cast<ArrayNode*>(value);
+		
+		IntegerNode* amt = new IntegerNode();
+		amt->Type(NodeType::INTEGER);
+		amt->Value(false, arr->Size());
+
+		return amt;
+	}
+	else if (currentType == NodeType::STRING)
+	{
+		StringNode* str = static_cast<StringNode*>(value);
+
+		IntegerNode* amt = new IntegerNode();
+		amt->Type(NodeType::INTEGER);
+		amt->Value(false, str->Value().size());
+
+		return amt;
+	}
+	else
+	{
+		std::cerr << "Interpreter Error! The element to grab the \"amount\" of must be an Array or String!" << std::endl;
+		std::cerr << "Current type: " << GetNodeTypeName(currentType) << std::endl;
+
+		if (deleteNode)
+			delete value;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	if (deleteNode)
+		delete value;
+
+	return nullptr;
 }
 
 Node* Interpreter::_ExecuteBinaryOperation(

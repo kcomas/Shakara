@@ -7,9 +7,10 @@ namespace Shakara
 	namespace AST
 	{
 		enum class CallFlags : uint8_t {
-			NONE  = 0x00,
-			PRINT = 0x01,
-			TYPE  = 0x02
+			NONE   = 0x00,
+			PRINT  = 0x01,
+			TYPE   = 0x02,
+			AMOUNT = 0x03
 		};
 
 		class FunctionCall : public Node

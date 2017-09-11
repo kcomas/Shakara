@@ -427,6 +427,11 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 		*type = TokenType::TYPE;
 		return true;
 	}
+	else if (value == "amt")
+	{
+		*type = TokenType::AMOUNT;
+		return true;
+	}
 	else if (value == "return")
 	{
 		*type = TokenType::RETURN;
