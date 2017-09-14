@@ -174,6 +174,8 @@ Also, like many other C-like languages, braces in if statements can be omitted, 
     if (condition)
         statement
 
+You can also use `else` or `else if` like any other C-like language.
+
 ### While Loops
 
 Like other C-like languages, you can use a while loop with the following
