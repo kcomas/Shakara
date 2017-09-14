@@ -78,7 +78,8 @@ namespace Shakara
 		 * Statements
 		 */
 		IF_STATEMENT            = 0x27,
-		WHILE_STATEMENT         = 0x28
+		ELSE_STATEMENT          = 0x28,
+		WHILE_STATEMENT         = 0x29
 	};
 
 	struct Token

@@ -452,6 +452,31 @@ void Interpreter::_ExecuteIfStatement(
 			&ifScope
 		);
 	}
+	// If the condition is not true but we have an
+	// else if, try and execute a new if statement
+	else if (statement->ElseIfCondition())
+		_ExecuteIfStatement(
+			statement->ElseIfCondition(),
+			function,
+			returnNode,
+			scope
+		);
+	// Now we check if there is a else condition
+	// and if there is, execute that instead
+	else if (statement->ElseBlock())
+	{
+		// Create a new scope separate from the if
+		// statement scope to execute the else
+		Scope elseScope = { 0 };
+		elseScope.parent = &scope;
+
+		Execute(
+			static_cast<RootNode*>(statement->ElseBlock()),
+			function,
+			returnNode,
+			&elseScope
+		);
+	}
 }
 
 void Interpreter::_ExecuteWhileStatement(

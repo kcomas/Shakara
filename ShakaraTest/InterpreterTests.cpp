@@ -355,11 +355,14 @@ namespace ShakaraTest
 					{
 						if (name == "Maxwell")
 							return name + "!"
-						
-						return name
+						else if (name == "David")
+							return name + "?"
+						else
+							return name
 					}
 
 					print(namer("Maxwell"))
+					print(namer("David"))
 					print(namer("Max"))
 				)";
 
@@ -383,7 +386,7 @@ namespace ShakaraTest
 
 				// Should be "Maxwell!Max"
 				Assert::AreEqual(
-					"Maxwell!Max",
+					"Maxwell!David?Max",
 					output.str().c_str()
 				);
 			}

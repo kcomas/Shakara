@@ -20,6 +20,8 @@ namespace Shakara
 
 		class ArrayNode;
 
+		class IfStatement;
+
 		/**
 		 * Simple AST implementation for Shakara.
 		 */
@@ -93,6 +95,18 @@ namespace Shakara
 			 */
 			void _ParseIfStatement(
 				RootNode*           root,
+				std::vector<Token>& tokens,
+				size_t              index,
+				ptrdiff_t*          next
+			);
+
+			/**
+			 * Attempt to parse an if statement as a
+			 * singular node, usually used for else if
+			 * block parsing.
+			 */
+			void _ParseIfStatement(
+				IfStatement*        statement,
 				std::vector<Token>& tokens,
 				size_t              index,
 				ptrdiff_t*          next

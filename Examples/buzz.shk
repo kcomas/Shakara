@@ -4,14 +4,12 @@ fizzbuzz = (number)
 
 	if (number % 3 == 0)
 		buzzer += "Fizz"
-
-	if (number % 5 == 0)
+	else if (number % 5 == 0)
 		buzzer += "Buzz"
-
-	if (buzzer == "")
+	else if (buzzer == "")
 		return number
-
-	return buzzer
+	else
+		return buzzer
 }
 
 count = 1

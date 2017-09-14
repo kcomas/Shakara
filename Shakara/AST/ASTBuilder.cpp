@@ -397,14 +397,29 @@ void ASTBuilder::_ParseIfStatement(
 	ptrdiff_t*          next
 )
 {
+	IfStatement* statement = new IfStatement();
+	statement->Type(NodeType::IF_STATEMENT);
+
+	_ParseIfStatement(
+		statement,
+		tokens,
+		index,
+		next
+	);
+
+	root->Insert(statement);
+}
+
+void ASTBuilder::_ParseIfStatement(
+	IfStatement*        statement,
+	std::vector<Token>& tokens,
+	size_t              index,
+	ptrdiff_t*          next
+)
+{
 	// Start by setting the next token
 	// as the index passed in
 	*next = index;
-
-	// Create the if statement node that will be
-	// added to the root
-	IfStatement* ifStatement = new IfStatement();
-	ifStatement->Type(NodeType::IF_STATEMENT);
 
 	// Move on to trying to parse the conditions
 	(*next)++;
@@ -420,19 +435,20 @@ void ASTBuilder::_ParseIfStatement(
 		next
 	);
 
-	value->Parent(ifStatement);
-	ifStatement->Condition(value);
+	value->Parent(statement);
+	statement->Condition(value);
 
 	// If we are at the end of the condition, move on
 	if (tokens[*next].type == TokenType::END_ARGS)
 		(*next)++;
 
-	RootNode* body = new RootNode();
-
 	// Once we are done with the condition, check if there's a
-	// BEGIN_BLOCK token at the current location
+	// BEGIN_BLOCK token at the current location and if so
+	// start parsing the if statement block
 	if (tokens[*next].type == TokenType::BEGIN_BLOCK)
 	{
+		RootNode* body = new RootNode();
+
 		(*next)++;
 
 		// Now, like with functions, do a while loop
@@ -442,7 +458,7 @@ void ASTBuilder::_ParseIfStatement(
 			if (tokens[*next].type == TokenType::END_BLOCK)
 			{
 				(*next)++;
-				
+
 				break;
 			}
 
@@ -460,9 +476,7 @@ void ASTBuilder::_ParseIfStatement(
 
 		// Now add the body statements to the declaration
 		// and add the declaration to the root
-		ifStatement->Body(body);
-
-		root->Insert(ifStatement);
+		statement->Body(body);
 	}
 	// This might be a little bit funky but, I usually omit braces
 	// in an if statement if it is only one line, so therefore, I'm
@@ -471,6 +485,8 @@ void ASTBuilder::_ParseIfStatement(
 	// for errors in a user's code, but that's more operator error, I feel
 	else
 	{
+		RootNode* body = new RootNode();
+
 		bool madeNew = _BuildIndividualNode(
 			body,
 			tokens,
@@ -484,9 +500,93 @@ void ASTBuilder::_ParseIfStatement(
 		// Set the body to the root node with
 		// only one expression inside and then
 		// continue
-		ifStatement->Body(body);
+		statement->Body(body);
+	}
 
-		root->Insert(ifStatement);
+	// If we have an else/else if to parse
+	bool hasElse = false;
+
+	// Now, check if there is an else keyword, and if there
+	// is, move on to the next keyword
+	if (tokens[*next].type == TokenType::ELSE_STATEMENT)
+	{
+		(*next)++;
+
+		hasElse = true;
+	}
+
+	// This must be an else if in this case, thus make
+	// a new if statement node and attach it to the
+	// current if statement
+	if (tokens[*next].type == TokenType::IF_STATEMENT && hasElse)
+	{
+		IfStatement* elseIf = new IfStatement();
+		elseIf->Type(NodeType::IF_STATEMENT);
+
+		_ParseIfStatement(
+			elseIf,
+			tokens,
+			*next,
+			next
+		);
+
+		statement->ElseIfCondition(elseIf);
+	}
+	// Otherwise, see if there is a begin block and
+	// if so, parse the block
+	else if (tokens[*next].type == TokenType::BEGIN_BLOCK && hasElse)
+	{
+		RootNode* body = new RootNode();
+
+		(*next)++;
+
+		// Now, like with functions, do a while loop
+		// to build an else body
+		while (static_cast<size_t>((*next)) < tokens.size())
+		{
+			if (tokens[*next].type == TokenType::END_BLOCK)
+			{
+				(*next)++;
+
+				break;
+			}
+
+			// Attempt to build a new node for the
+			// function, if one is not able to be
+			// made, continue to the next token
+			if (!_BuildIndividualNode(
+				body,
+				tokens,
+				*next,
+				next
+			))
+				(*next)++;
+		}
+
+		// Now, set the else body to that of the
+		// generated body
+		statement->ElseBlock(body);
+	}
+	// Otherwise, just parse a single statement and
+	// use that as the else block
+	else if (hasElse)
+	{
+		RootNode* body = new RootNode();
+
+		bool madeNew = _BuildIndividualNode(
+			body,
+			tokens,
+			*next,
+			next
+		);
+
+		if (!madeNew)
+			(*next)++;
+
+		// Set the body to the root node with
+		// only one expression inside and then
+		// continue
+		statement->ElseBlock(body);
 	}
 }
 
