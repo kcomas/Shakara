@@ -695,6 +695,26 @@ Node* Interpreter::_ExecuteFunction(
 			call,
 			scope
 		);
+	else if (call->Flags() == CallFlags::INTEGER_CAST)
+		return _ExecuteIntegerCast(
+			call,
+			scope
+		);
+	else if (call->Flags() == CallFlags::DECIMAL_CAST)
+		return _ExecuteDecimalCast(
+			call,
+			scope
+		);
+	else if (call->Flags() == CallFlags::STRING_CAST)
+		return _ExecuteStringCast(
+			call,
+			scope
+		);
+	else if (call->Flags() == CallFlags::BOOLEAN_CAST)
+		return _ExecuteBooleanCast(
+			call,
+			scope
+		);
 
 	// First, try and find the actual function
 	// declaration in the global map
@@ -790,6 +810,7 @@ Node* Interpreter::_ExecuteFunction(
 		{
 			// Grab the temporary return result
 			Node* result = _ExecuteFunction(static_cast<FunctionCall*>(argument), scope);
+			result->MarkDelete(true);
 
 			if (!result)
 			{
@@ -1116,6 +1137,571 @@ Node* Interpreter::_ExecuteAmount(
 	}
 
 	if (deleteNode)
+		delete value;
+
+	return nullptr;
+}
+
+Node* Interpreter::_ExecuteIntegerCast(
+	FunctionCall* caster,
+	Scope&        scope
+)
+{
+	// Be sure that this is a print call
+	if (caster->Flags() != CallFlags::INTEGER_CAST)
+		return nullptr;
+
+	// Make sure that only one argument is
+	// in the call, as you can only cast one
+	// node at a time
+	if (caster->Arguments().size() != 1)
+	{
+		std::cerr << "Interpreter Error! The \"integer\" caster can only be used with one argument!" << std::endl;
+		std::cerr << "Argument amount: " << caster->Arguments().size() << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// Grab the single argument and its
+	// type
+	Node*     value       = caster->Arguments()[0];
+	NodeType  currentType = value->Type();
+	bool      requiresDel = false;
+
+	// Convert to a true value based on
+	// the current argument type
+	if (currentType == NodeType::IDENTIFIER)
+	{
+		value       = scope.Search(static_cast<IdentifierNode*>(value)->Value())->Clone();
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::BINARY_OP)
+	{
+		value       = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::LOGICAL_OP)
+	{
+		value       = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::CALL)
+	{
+		value       = _ExecuteFunction(static_cast<FunctionCall*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+	{
+		value       = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+
+	// Now, check if the type is already
+	// an integer type, and if so, just
+	// return the value node
+	if (currentType == NodeType::INTEGER)
+	{
+		Node* returnNode = value->Clone();
+
+		if (requiresDel)
+			delete value;
+
+		return returnNode;
+	}
+	// If this is a decimal value, just floor
+	// it and set a new node with the floored
+	// value
+	else if (currentType == NodeType::DECIMAL)
+	{
+		float decimalValue = static_cast<DecimalNode*>(value)->Value();
+
+		// Create the returnable integer node
+		IntegerNode* castedNode = new IntegerNode();
+		castedNode->Type(NodeType::INTEGER);
+		castedNode->Value(false, static_cast<int32_t>(std::floor(decimalValue)));
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+	// If this is a boolean value, then if
+	// true, return 1, if false, return 0
+	else if (currentType == NodeType::BOOLEAN)
+	{
+		bool boolValue = static_cast<BooleanNode*>(value)->Value();
+
+		// Create the returnable integer node
+		IntegerNode* castedNode = new IntegerNode();
+		castedNode->Type(NodeType::INTEGER);
+		castedNode->Value(false, ((boolValue) ? 1 : 0));
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+	// If this is a string, try and parse
+	// the string to an integer and then
+	// return the result if able to
+	else if (currentType == NodeType::STRING)
+	{
+		std::string stringValue = static_cast<StringNode*>(value)->Value();
+
+		// Grab the integer value
+		int32_t castedValue = 0;
+
+		try
+		{
+			castedValue = std::stoi(stringValue);
+		}
+		catch (std::invalid_argument const&)
+		{
+			if (requiresDel)
+				delete value;
+
+			std::cerr << "Interpreter Error! Invalid string used with \"integer\" caster!" << std::endl;
+			std::cerr << "String value: " << stringValue << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+		}
+
+		// Create the returnable integer node
+		IntegerNode* castedNode = new IntegerNode();
+		castedNode->Type(NodeType::INTEGER);
+		castedNode->Value(false, castedValue);
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+
+	if (requiresDel)
+		delete value;
+
+	return nullptr;
+}
+
+Node* Interpreter::_ExecuteDecimalCast(
+	FunctionCall* caster,
+	Scope&        scope
+)
+{
+	// Be sure that this is a print call
+	if (caster->Flags() != CallFlags::DECIMAL_CAST)
+		return nullptr;
+
+	// Make sure that only one argument is
+	// in the call, as you can only cast one
+	// node at a time
+	if (caster->Arguments().size() != 1)
+	{
+		std::cerr << "Interpreter Error! The \"decimal\" caster can only be used with one argument!" << std::endl;
+		std::cerr << "Argument amount: " << caster->Arguments().size() << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// Grab the single argument and its
+	// type
+	Node*     value       = caster->Arguments()[0];
+	NodeType  currentType = value->Type();
+	bool      requiresDel = false;
+
+	// Convert to a true value based on
+	// the current argument type
+	if (currentType == NodeType::IDENTIFIER)
+	{
+		value       = scope.Search(static_cast<IdentifierNode*>(value)->Value())->Clone();
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::BINARY_OP)
+	{
+		value       = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::LOGICAL_OP)
+	{
+		value       = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::CALL)
+	{
+		value       = _ExecuteFunction(static_cast<FunctionCall*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+	{
+		value       = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+
+	// Now, check if the type is already
+	// an integer type, and if so, just
+	// return the value node
+	if (currentType == NodeType::DECIMAL)
+	{
+		Node* returnNode = value->Clone();
+
+		if (requiresDel)
+			delete value;
+
+		return returnNode;
+	}
+	// If this is a decimal value, just floor
+	// it and set a new node with the floored
+	// value
+	else if (currentType == NodeType::INTEGER)
+	{
+		int32_t integerValue = static_cast<IntegerNode*>(value)->Value();
+
+		// Create the returnable integer node
+		DecimalNode* castedNode = new DecimalNode();
+		castedNode->Type(NodeType::DECIMAL);
+		castedNode->Value(false, static_cast<float>(integerValue));
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+	// If this is a boolean value, then if
+	// true, return 1, if false, return 0
+	else if (currentType == NodeType::BOOLEAN)
+	{
+		bool boolValue = static_cast<BooleanNode*>(value)->Value();
+
+		// Create the returnable integer node
+		DecimalNode* castedNode = new DecimalNode();
+		castedNode->Type(NodeType::DECIMAL);
+		castedNode->Value(false, ((boolValue) ? 1.0f : 0.0f));
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+	// If this is a string, try and parse
+	// the string to an integer and then
+	// return the result if able to
+	else if (currentType == NodeType::STRING)
+	{
+		std::string stringValue = static_cast<StringNode*>(value)->Value();
+
+		// Grab the float value
+		float castedValue = 0.0f;
+
+		try
+		{
+			castedValue = std::stof(stringValue);
+		}
+		catch (std::invalid_argument const&)
+		{
+			if (requiresDel)
+				delete value;
+
+			std::cerr << "Interpreter Error! Invalid string used with \"decimal\" caster!" << std::endl;
+			std::cerr << "String value: " << stringValue << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+		}
+
+		// Create the returnable integer node
+		DecimalNode* castedNode = new DecimalNode();
+		castedNode->Type(NodeType::DECIMAL);
+		castedNode->Value(false, castedValue);
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+
+	if (requiresDel)
+		delete value;
+
+	return nullptr;
+}
+
+Node* Interpreter::_ExecuteStringCast(
+	FunctionCall* caster,
+	Scope&        scope
+)
+{
+	// Be sure that this is a print call
+	if (caster->Flags() != CallFlags::STRING_CAST)
+		return nullptr;
+
+	// Make sure that only one argument is
+	// in the call, as you can only cast one
+	// node at a time
+	if (caster->Arguments().size() != 1)
+	{
+		std::cerr << "Interpreter Error! The \"string\" caster can only be used with one argument!" << std::endl;
+		std::cerr << "Argument amount: " << caster->Arguments().size() << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// Grab the single argument and its
+	// type
+	Node*     value = caster->Arguments()[0];
+	NodeType  currentType = value->Type();
+	bool      requiresDel = false;
+
+	// Convert to a true value based on
+	// the current argument type
+	if (currentType == NodeType::IDENTIFIER)
+	{
+		value = scope.Search(static_cast<IdentifierNode*>(value)->Value())->Clone();
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::BINARY_OP)
+	{
+		value = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::LOGICAL_OP)
+	{
+		value = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::CALL)
+	{
+		value = _ExecuteFunction(static_cast<FunctionCall*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+	{
+		value = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+
+	// Now, check if the type is already
+	// an integer type, and if so, just
+	// return the value node
+	if (currentType == NodeType::STRING)
+	{
+		Node* returnNode = value->Clone();
+
+		if (requiresDel)
+			delete value;
+
+		return returnNode;
+	}
+	// If this is a decimal value, just floor
+	// it and set a new node with the floored
+	// value
+	else if (currentType == NodeType::INTEGER)
+	{
+		int32_t integerValue = static_cast<IntegerNode*>(value)->Value();
+
+		// Create the returnable integer node
+		StringNode* castedNode = new StringNode();
+		castedNode->Type(NodeType::STRING);
+		castedNode->Value(std::to_string(integerValue));
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+	// If this is a boolean value, then if
+	// true, return 1, if false, return 0
+	else if (currentType == NodeType::BOOLEAN)
+	{
+		bool boolValue = static_cast<BooleanNode*>(value)->Value();
+
+		// Create the returnable integer node
+		StringNode* castedNode = new StringNode();
+		castedNode->Type(NodeType::STRING);
+		castedNode->Value(((boolValue) ? "true" : "false"));
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+	// If this is a string, try and parse
+	// the string to an integer and then
+	// return the result if able to
+	else if (currentType == NodeType::DECIMAL)
+	{
+		float decimalValue = static_cast<DecimalNode*>(value)->Value();
+
+		// Create the returnable integer node
+		StringNode* castedNode = new StringNode();
+		castedNode->Type(NodeType::STRING);
+		
+		// Grab the string value of the decimal
+		// and truncate the zeros
+		std::string decimalString = std::to_string(decimalValue);
+		decimalString.erase(decimalString.find_last_not_of("0") + 1, std::string::npos);
+
+		// Add a single zero if just a period
+		// is at the end
+		if (decimalString.back() == '.')
+			decimalString.push_back('0');
+
+		castedNode->Value(decimalString);
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+
+	if (requiresDel)
+		delete value;
+
+	return nullptr;
+}
+
+Node* Interpreter::_ExecuteBooleanCast(
+	FunctionCall* caster,
+	Scope&        scope
+)
+{
+	// Be sure that this is a print call
+	if (caster->Flags() != CallFlags::BOOLEAN_CAST)
+		return nullptr;
+
+	// Make sure that only one argument is
+	// in the call, as you can only cast one
+	// node at a time
+	if (caster->Arguments().size() != 1)
+	{
+		std::cerr << "Interpreter Error! The \"boolean\" caster can only be used with one argument!" << std::endl;
+		std::cerr << "Argument amount: " << caster->Arguments().size() << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+	}
+
+	// Grab the single argument and its
+	// type
+	Node*     value = caster->Arguments()[0];
+	NodeType  currentType = value->Type();
+	bool      requiresDel = false;
+
+	// Convert to a true value based on
+	// the current argument type
+	if (currentType == NodeType::IDENTIFIER)
+	{
+		value = scope.Search(static_cast<IdentifierNode*>(value)->Value())->Clone();
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::BINARY_OP)
+	{
+		value = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::LOGICAL_OP)
+	{
+		value = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::CALL)
+	{
+		value = _ExecuteFunction(static_cast<FunctionCall*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+	else if (currentType == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+	{
+		value = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(value), scope);
+		currentType = value->Type();
+		requiresDel = true;
+	}
+
+	// Now, check if the type is already
+	// an integer type, and if so, just
+	// return the value node
+	if (currentType == NodeType::BOOLEAN)
+	{
+		Node* returnNode = value->Clone();
+
+		if (requiresDel)
+			delete value;
+
+		return returnNode;
+	}
+	// If this is a decimal value, just floor
+	// it and set a new node with the floored
+	// value
+	else if (currentType == NodeType::INTEGER)
+	{
+		int32_t integerValue = static_cast<IntegerNode*>(value)->Value();
+
+		// Create the returnable integer node
+		BooleanNode* castedNode = new BooleanNode();
+		castedNode->Type(NodeType::BOOLEAN);
+		castedNode->Value((integerValue >= 1));
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+	// If this is a boolean value, then if
+	// true, return 1, if false, return 0
+	else if (currentType == NodeType::DECIMAL)
+	{
+		float decimalValue = static_cast<DecimalNode*>(value)->Value();
+
+		// Create the returnable integer node
+		BooleanNode* castedNode = new BooleanNode();
+		castedNode->Type(NodeType::BOOLEAN);
+		castedNode->Value((decimalValue >= 1.0f));
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+	// If this is a string, try and parse
+	// the string to an integer and then
+	// return the result if able to
+	else if (currentType == NodeType::STRING)
+	{
+		std::string stringValue = static_cast<StringNode*>(value)->Value();
+
+		// Create the returnable integer node
+		BooleanNode* castedNode = new BooleanNode();
+		castedNode->Type(NodeType::BOOLEAN);
+		castedNode->Value((stringValue == "true"));
+
+		if (requiresDel)
+			delete value;
+
+		return castedNode;
+	}
+
+	if (requiresDel)
 		delete value;
 
 	return nullptr;

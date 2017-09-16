@@ -417,22 +417,8 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 		}
 	}
 
-	if (value == "print")
-	{
-		*type = TokenType::PRINT;
-		return true;
-	}
-	else if (value == "type")
-	{
-		*type = TokenType::TYPE;
-		return true;
-	}
-	else if (value == "amt")
-	{
-		*type = TokenType::AMOUNT;
-		return true;
-	}
-	else if (value == "return")
+	// Set up special keyword tokens
+	if (value == "return")
 	{
 		*type = TokenType::RETURN;
 		return true;

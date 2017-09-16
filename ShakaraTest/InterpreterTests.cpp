@@ -533,9 +533,9 @@ namespace ShakaraTest
 				Shakara::Interpreter interpreter(output);
 				interpreter.Execute(&root);
 
-				// Should be "IntegerStringIntegerBoolean"
+				// Should be "integerstringintegerboolean"
 				Assert::AreEqual(
-					"IntegerStringIntegerBoolean",
+					"integerstringintegerboolean",
 					output.str().c_str()
 				);
 			}
@@ -589,6 +589,149 @@ namespace ShakaraTest
 				// Should be "I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!"
 				Assert::AreEqual(
 					"4I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!",
+					output.str().c_str()
+				);
+			}
+
+			TEST_METHOD(InterpretIntegerCasting)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					print(integer("3"))
+					print(integer(2))
+					print(integer(6.0))
+					print(integer(true))
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				std::stringstream output;
+
+				Shakara::Interpreter interpreter(output);
+				interpreter.Execute(&root);
+
+				// Should be "3261"
+				Assert::AreEqual(
+					"3261",
+					output.str().c_str()
+				);
+			}
+
+			TEST_METHOD(InterpretDecimalCasting)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					print(decimal(6.0))
+					print(decimal("2.24"))
+					print(decimal(true))
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				std::stringstream output;
+
+				Shakara::Interpreter interpreter(output);
+				interpreter.Execute(&root);
+
+				// Should be "62.241"
+				Assert::AreEqual(
+					"62.241",
+					output.str().c_str()
+				);
+			}
+
+			TEST_METHOD(InterpretStringCasting)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					print(string(6.0))
+					print(string("Hey"))
+					print(string(true))
+					print(string(2))
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				std::stringstream output;
+
+				Shakara::Interpreter interpreter(output);
+				interpreter.Execute(&root);
+
+				// Should be "6.24Heytrue2"
+				Assert::AreEqual(
+					"6.0Heytrue2",
+					output.str().c_str()
+				);
+			}
+
+			TEST_METHOD(InterpretBooleanCasting)
+			{
+				// Create a test statement and insert
+				// it into a stringstream
+				std::string code = R"(
+					print(boolean(1.0))
+					print(boolean("false"))
+					print(boolean(true))
+					print(boolean(0))
+				)";
+
+				std::stringstream stream(code, std::ios::in);
+
+				// Tokenize the stringstream
+				std::vector<Shakara::Token> tokens;
+
+				Shakara::Tokenizer tokenizer;
+				tokenizer.Tokenize(stream, tokens);
+
+				// Run the ASTBuilder to grab an AST
+				Shakara::AST::RootNode   root;
+				Shakara::AST::ASTBuilder builder;
+				builder.Build(&root, tokens);
+
+				std::stringstream output;
+
+				Shakara::Interpreter interpreter(output);
+				interpreter.Execute(&root);
+
+				// Should be "truefalsetruefalse"
+				Assert::AreEqual(
+					"truefalsetruefalse",
 					output.str().c_str()
 				);
 			}

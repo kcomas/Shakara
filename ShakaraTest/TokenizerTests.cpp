@@ -469,12 +469,12 @@ namespace ShakaraTest
 				// Next, make sure that each token is
 				// the right type
 				//
-				// The order should be print, begin args
+				// The order should be identifier, begin args
 				// string, and end args
 				Assert::AreEqual(
-					static_cast<uint8_t>(Shakara::TokenType::PRINT),
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
 					static_cast<uint8_t>(tokens[0].type),
-					L"Incorrect type! Expected an PRINT type."
+					L"Incorrect type! Expected an IDENTIFIER type."
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::BEGIN_ARGS),
@@ -731,9 +731,9 @@ namespace ShakaraTest
 					L"Incorrect token type! Expected BEGIN_BLOCK!"
 				);
 				Assert::AreEqual(
-					static_cast<uint8_t>(Shakara::TokenType::PRINT),
+					static_cast<uint8_t>(Shakara::TokenType::IDENTIFIER),
 					static_cast<uint8_t>(tokens[5].type),
-					L"Incorrect token type! Expected PRINT!"
+					L"Incorrect token type! Expected IDENTIFIER!"
 				);
 				Assert::AreEqual(
 					static_cast<uint8_t>(Shakara::TokenType::BEGIN_ARGS),

@@ -72,39 +72,39 @@ namespace Shakara
 			switch (type)
 			{
 			case NodeType::ROOT:
-				return "Root";
+				return "root";
 			case NodeType::ASSIGN:
-				return "Assign";
+				return "assign";
 			case NodeType::BINARY_OP:
-				return "Binary Operation";
+				return "binary operation";
 			case NodeType::FUNCTION:
-				return "Function Declaration";
+				return "function declaration";
 			case NodeType::CALL:
-				return "Function Call";
+				return "function call";
 			case NodeType::INTEGER:
-				return "Integer";
+				return "integer";
 			case NodeType::DECIMAL:
-				return "Decimal";
+				return "decimal";
 			case NodeType::STRING:
-				return "String";
+				return "string";
 			case NodeType::BOOLEAN:
-				return "Boolean";
+				return "boolean";
 			case NodeType::IDENTIFIER:
-				return "Identifier";
+				return "identifier";
 			case NodeType::ADD:
-				return "Add";
+				return "add";
 			case NodeType::SUBTRACT:
-				return "Subtract";
+				return "subtract";
 			case NodeType::MULTIPLY:
-				return "Multiply";
+				return "multiply";
 			case NodeType::DIVIDE:
-				return "Divide";
+				return "divide";
 			case NodeType::MODULUS:
-				return "Modulus";
+				return "modulus";
 			case NodeType::RETURN:
-				return "Return";
+				return "return";
 			case NodeType::ARRAY:
-				return "Array";
+				return "array";
 			}
 
 			return "Unknown";

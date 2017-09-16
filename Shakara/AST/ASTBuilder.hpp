@@ -22,6 +22,8 @@ namespace Shakara
 
 		class IfStatement;
 
+		enum class CallFlags : uint8_t;
+
 		/**
 		 * Simple AST implementation for Shakara.
 		 */
@@ -293,6 +295,8 @@ namespace Shakara
 			bool _IsIncrementDecrementToken(const TokenType& type);
 
 			bool _IsArithmeticAssignmentToken(const TokenType& type);
+
+			CallFlags _GetCallFlagFromIdentifier(const std::string& identifier);
 
 		};
 	}

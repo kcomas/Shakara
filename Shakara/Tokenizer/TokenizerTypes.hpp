@@ -53,33 +53,31 @@ namespace Shakara
 		MODULUS_EQUAL           = 0x18,
 
 		/**
-		 * Special Tokens (print, etc)
+		 * Specially used keywords, like
+		 * return
 		 */
-		TYPE                    = 0x19,
-		PRINT                   = 0x1A,
-		RETURN                  = 0x1B,
-		AMOUNT                  = 0x1C,
+		RETURN                  = 0x19,
 
 		/**
 		 * Boolean and Logical Tokens
 		 */
-		BOOLEAN                 = 0x1D,
-		AND                     = 0x1E,
-		OR                      = 0x1F,
-		NOT                     = 0x20,
-		EQUAL_COMPARISON        = 0x21,
-		NOTEQUAL_COMPARISON     = 0x22,
-		LESS_COMPARISON         = 0x23,
-		GREATER_COMPARISON      = 0x24,
-		LESSEQUAL_COMPARISON    = 0x25,
-		GREATEREQUAL_COMPARISON = 0x26,
+		BOOLEAN                 = 0x1A,
+		AND                     = 0x1B,
+		OR                      = 0x1C,
+		NOT                     = 0x1D,
+		EQUAL_COMPARISON        = 0x1E,
+		NOTEQUAL_COMPARISON     = 0x1F,
+		LESS_COMPARISON         = 0x20,
+		GREATER_COMPARISON      = 0x21,
+		LESSEQUAL_COMPARISON    = 0x22,
+		GREATEREQUAL_COMPARISON = 0x23,
 
 		/**
 		 * Statements
 		 */
-		IF_STATEMENT            = 0x27,
-		ELSE_STATEMENT          = 0x28,
-		WHILE_STATEMENT         = 0x29
+		IF_STATEMENT            = 0x24,
+		ELSE_STATEMENT          = 0x25,
+		WHILE_STATEMENT         = 0x26
 	};
 
 	struct Token

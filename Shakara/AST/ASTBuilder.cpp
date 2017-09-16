@@ -220,54 +220,6 @@ bool ASTBuilder::_BuildIndividualNode(
 			}
 		}
 	}
-	// Parse this print call as a function call
-	else if (
-		tokens.size()          >= 2                &&
-		tokens[index].type     == TokenType::PRINT &&
-		tokens[index + 1].type == TokenType::BEGIN_ARGS
-	)
-	{
-		_ParseFunctionCall(
-			root,
-			tokens,
-			index,
-			next
-		);
-
-		return true;
-	}
-	// Parse the type call as a special function call
-	else if (
-		tokens.size()          >= 2               &&
-		tokens[index].type     == TokenType::TYPE &&
-		tokens[index + 1].type == TokenType::BEGIN_ARGS
-	)
-	{
-		_ParseFunctionCall(
-			root,
-			tokens,
-			index,
-			next
-		);
-
-		return true;
-	}
-	// Parse the amount call as a special function call
-	else if (
-		tokens.size()          >= 2 &&
-		tokens[index].type     == TokenType::AMOUNT &&
-		tokens[index + 1].type == TokenType::BEGIN_ARGS
-	)
-	{
-		_ParseFunctionCall(
-			root,
-			tokens,
-			index,
-			next
-		);
-
-		return true;
-	}
 	// Parse a return statement
 	else if (tokens[index].type == TokenType::RETURN)
 	{
@@ -807,12 +759,9 @@ void ASTBuilder::_ParseFunctionCall(
 
 	call->Identifier(identifier);
 
-	if (tokens[(*next)].type == TokenType::PRINT)
-		call->SetFlags(CallFlags::PRINT);
-	else if (tokens[(*next)].type == TokenType::TYPE)
-		call->SetFlags(CallFlags::TYPE);
-	else if (tokens[(*next)].type == TokenType::AMOUNT)
-		call->SetFlags(CallFlags::AMOUNT);
+	// Set up the special call flags based on the
+	// identifier name
+	call->SetFlags(_GetCallFlagFromIdentifier(tokens[(*next)].value));
 
 	// We know that there's a begin args
 	// after this identifier, so just
@@ -1173,9 +1122,7 @@ Node* ASTBuilder::_GetPassableNode(
 	// After the binary operation, check if this could be an array definition
 	if (
 		static_cast<size_t>((*next) + 1) < tokens.size()  &&
-		(tokens[(*next)].type == TokenType::IDENTIFIER    ||
-		 tokens[(*next)].type == TokenType::TYPE          ||
-		 tokens[(*next)].type == TokenType::AMOUNT)       &&
+		tokens[(*next)].type     == TokenType::IDENTIFIER &&
 		tokens[(*next) + 1].type == TokenType::BEGIN_ARGS
 	)
 	{
@@ -1742,4 +1689,24 @@ bool ASTBuilder::_IsArithmeticAssignmentToken(const TokenType& type)
 		   (type == TokenType::MULTIPLY_EQUAL) ||
 		   (type == TokenType::DIVIDE_EQUAL)   ||
 		   (type == TokenType::MODULUS_EQUAL);
+}
+
+CallFlags ASTBuilder::_GetCallFlagFromIdentifier(const std::string& identifier)
+{
+	if (identifier == "print")
+		return CallFlags::PRINT;
+	else if (identifier == "type")
+		return CallFlags::TYPE;
+	else if (identifier == "amt")
+		return CallFlags::AMOUNT;
+	else if (identifier == "integer")
+		return CallFlags::INTEGER_CAST;
+	else if (identifier == "decimal")
+		return CallFlags::DECIMAL_CAST;
+	else if (identifier == "string")
+		return CallFlags::STRING_CAST;
+	else if (identifier == "boolean")
+		return CallFlags::BOOLEAN_CAST;
+
+	return CallFlags::NONE;
 }

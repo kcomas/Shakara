@@ -224,7 +224,7 @@ namespace Shakara
 		 * to grab variables defined within.
 		 */
 		AST::Node* _ExecuteType(
-			AST::FunctionCall* print,
+			AST::FunctionCall* type,
 			Scope&             scope
 		);
 
@@ -237,6 +237,54 @@ namespace Shakara
 		 */
 		AST::Node* _ExecuteAmount(
 			AST::FunctionCall* amount,
+			Scope&             scope
+		);
+
+		/**
+		 * Take in any kind of built-in type value
+		 * and try to cast it to an integer.
+		 *
+		 * The scope argument is used for functions
+		 * to grab variables defined within.
+		 */
+		AST::Node* _ExecuteIntegerCast(
+			AST::FunctionCall* caster,
+			Scope&             scope
+		);
+
+		/**
+		 * Take in any kind of built-in type value
+		 * and try to cast it to a decimal.
+		 *
+		 * The scope argument is used for functions
+		 * to grab variables defined within.
+		 */
+		AST::Node* _ExecuteDecimalCast(
+			AST::FunctionCall* caster,
+			Scope&             scope
+		);
+
+		/**
+		 * Take in any kind of built-in type value
+		 * and try to cast it to a string.
+		 *
+		 * The scope argument is used for functions
+		 * to grab variables defined within.
+		 */
+		AST::Node* _ExecuteStringCast(
+			AST::FunctionCall* caster,
+			Scope&             scope
+		);
+
+		/**
+	 	 * Take in any kind of built-in type value
+		 * and try to cast it to a boolean.
+		 *
+		 * The scope argument is used for functions
+		 * to grab variables defined within.
+		 */
+		AST::Node* _ExecuteBooleanCast(
+			AST::FunctionCall* caster,
 			Scope&             scope
 		);
 
