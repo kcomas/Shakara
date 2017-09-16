@@ -386,7 +386,7 @@ namespace ShakaraTest
 				Shakara::Interpreter interpreter(output);
 				interpreter.Execute(&root);
 
-				// Should be "Maxwell!Max"
+				// Should be "Maxwell!David?Max"
 				Assert::AreEqual(
 					"Maxwell!David?Max",
 					output.str().c_str()

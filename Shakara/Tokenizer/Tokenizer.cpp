@@ -428,7 +428,7 @@ bool Tokenizer::_DetermineTokenTypeFromValue(TokenType* type, const std::string&
 		*type = TokenType::IF_STATEMENT;
 		return true;
 	}
-	else if (value == "if")
+	else if (value == "else")
 	{
 		*type = TokenType::ELSE_STATEMENT;
 		return true;

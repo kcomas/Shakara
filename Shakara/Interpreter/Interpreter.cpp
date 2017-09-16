@@ -423,6 +423,8 @@ void Interpreter::_ExecuteIfStatement(
 		condition = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(condition), scope);
 	else if (condition->Type() == NodeType::LOGICAL_OP)
 		condition = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(condition), scope);
+	else if (condition->Type() == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+		condition = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(condition), scope);
 
 	// Make sure that the condition is a boolean value
 	// otherwise, you can't exactly "evaluate" the statement
@@ -437,8 +439,10 @@ void Interpreter::_ExecuteIfStatement(
 		return;
 	}
 
+	bool ifCondition = static_cast<BooleanNode*>(condition)->Value();
+
 	// Check the condition and if it is true, execute
-	if (static_cast<BooleanNode*>(condition)->Value())
+	if (ifCondition)
 	{
 		// Create another scope for the if statement, as
 		// to not muddy up the previous scope
@@ -454,7 +458,7 @@ void Interpreter::_ExecuteIfStatement(
 	}
 	// If the condition is not true but we have an
 	// else if, try and execute a new if statement
-	else if (statement->ElseIfCondition())
+	else if (statement->ElseIfCondition() && !ifCondition)
 		_ExecuteIfStatement(
 			statement->ElseIfCondition(),
 			function,
@@ -463,7 +467,7 @@ void Interpreter::_ExecuteIfStatement(
 		);
 	// Now we check if there is a else condition
 	// and if there is, execute that instead
-	else if (statement->ElseBlock())
+	else if (statement->ElseBlock() && !ifCondition)
 	{
 		// Create a new scope separate from the if
 		// statement scope to execute the else

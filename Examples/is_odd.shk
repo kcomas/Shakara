@@ -1,0 +1,11 @@
+argument_amt = amt(shk__cmd_args)
+
+if (argument_amt != 2)
+	print("Cannot have less/more than one argument when checking oddness!")
+
+value = integer(shk__cmd_args[1])
+
+if (value % 2 != 0)
+	print("Odd!")
+else
+	print("Even!")
