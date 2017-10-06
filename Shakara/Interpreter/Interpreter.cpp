@@ -704,6 +704,11 @@ Node* Interpreter::_ExecuteFunction(
 			call,
 			scope
 		);
+	else if (call->Flags() == CallFlags::POP_COLLECTION)
+		return _ExecutePop(
+			call,
+			scope
+		);
 	else if (call->Flags() == CallFlags::INTEGER_CAST)
 		return _ExecuteIntegerCast(
 			call,
@@ -1292,20 +1297,20 @@ Node* Interpreter::_ExecutePush(
 }
 
 Node* Interpreter::_ExecutePop(
-	FunctionCall* push,
+	FunctionCall* pop,
 	Scope&        scope
 )
 {
 	// Be sure that this is a print call
-	if (push->Flags() != CallFlags::PUSH_COLLECTION)
+	if (pop->Flags() != CallFlags::POP_COLLECTION)
 		return nullptr;
 
 	// Make sure before doing anything that the
 	// call only has two arguments
-	if (push->Arguments().size() != 2)
+	if (pop->Arguments().size() != 2)
 	{
-		std::cerr << "Interpreter Error! The \"push\" call can only be used with two arguments!" << std::endl;
-		std::cerr << "Argument amount: " << push->Arguments().size() << std::endl;
+		std::cerr << "Interpreter Error! The \"pop\" call can only be used with two arguments!" << std::endl;
+		std::cerr << "Argument amount: " << pop->Arguments().size() << std::endl;
 
 		if (m_errorHandle)
 			m_errorHandle();
@@ -1313,33 +1318,31 @@ Node* Interpreter::_ExecutePop(
 		return nullptr;
 	}
 
-	// If the argument is of a type, such
-	// as a call or a binary op, execute
-	// it, and then return the string
-	Node*     collectionArg = push->Arguments()[0];
+	// The collection that was passed in to pop from
+	Node*     collectionArg  = pop->Arguments()[0];
 	NodeType  collectionType = collectionArg->Type();
-	Node*     collection = collectionArg;
+	Node*     collection     = collectionArg;
 
 	// First, grab the identifier value before
 	// trying to evaluate the type of argument
 	if (collectionType == NodeType::IDENTIFIER)
 	{
-		collection = scope.Search(static_cast<IdentifierNode*>(collectionArg)->Value());
+		collection     = scope.Search(static_cast<IdentifierNode*>(collectionArg)->Value());
 		collectionType = collection->Type();
 	}
 	else if (collectionType == NodeType::CALL)
 	{
-		collection = _ExecuteFunction(static_cast<FunctionCall*>(collectionArg), scope);
+		collection     = _ExecuteFunction(static_cast<FunctionCall*>(collectionArg), scope);
 		collectionType = collection->Type();
 	}
 	else if (collectionType == NodeType::BINARY_OP)
 	{
-		collection = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(collectionArg), scope);
+		collection     = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(collectionArg), scope);
 		collectionType = collection->Type();
 	}
 	else if (collectionType == NodeType::ARRAY_ELEMENT_IDENTIFIER)
 	{
-		collection = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(collectionArg), scope);
+		collection     = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(collectionArg), scope);
 		collectionType = collection->Type();
 	}
 
@@ -1347,7 +1350,7 @@ Node* Interpreter::_ExecutePop(
 	// an array or a string
 	if (collectionType != NodeType::ARRAY)
 	{
-		std::cerr << "Interpreter Error! The \"push\" call's first argument can only be a string or an array!" << std::endl;
+		std::cerr << "Interpreter Error! The \"pop\" call's first argument can only be a string or an array!" << std::endl;
 		std::cerr << "First argument type: " << GetNodeTypeName(collectionType) << std::endl;
 
 		if (m_errorHandle)
@@ -1356,46 +1359,10 @@ Node* Interpreter::_ExecutePop(
 		return nullptr;
 	}
 
-	// Check the capacity and make sure that pushing
-	// wouldn't overflow the array
-	if (collectionType == NodeType::ARRAY && static_cast<ArrayNode*>(collection)->Capacity())
-	{
-		Node*    capacity = static_cast<ArrayNode*>(collection)->Capacity();
-		NodeType capacityType = capacity->Type();
-		size_t   amount = static_cast<ArrayNode*>(collection)->Size();
-
-		if (capacityType != NodeType::INTEGER)
-		{
-			std::cerr << "Interpreter Error! Array capacity must be an integer!" << std::endl;
-			std::cerr << "Capacity type: " << GetNodeTypeName(capacityType) << std::endl;
-
-			if (m_errorHandle)
-				m_errorHandle();
-
-			return nullptr;
-		}
-
-		int32_t capacityValue = static_cast<IntegerNode*>(capacity)->Value();
-
-		if (amount + 1 > static_cast<size_t>(capacityValue))
-		{
-			std::cerr << "Interpreter Error! Cannot push an array over capacity!" << std::endl;
-			std::cerr << "Capacity: " << capacityValue << std::endl;
-			std::cerr << "Amount: " << (amount + 1) << std::endl;
-
-			if (m_errorHandle)
-				m_errorHandle();
-
-			return nullptr;
-		}
-	}
-
-	// If the argument is of a type, such
-	// as a call or a binary op, execute
-	// it, and then return the string
-	Node*     valueArg = push->Arguments()[1];
+	// Grab the value of the pop index
+	Node*     valueArg  = pop->Arguments()[1];
 	NodeType  valueType = valueArg->Type();
-	Node*     value = valueArg;
+	Node*     value     = valueArg;
 
 	// First, grab the identifier value before
 	// trying to evaluate the type of argument
@@ -1425,9 +1392,50 @@ Node* Interpreter::_ExecutePop(
 		valueType = value->Type();
 	}
 
-	// Finally, insert the element at the end of the collection
+	// Make sure that the value is of an integer
+	if (valueType != NodeType::INTEGER)
+	{
+		std::cerr << "Interpreter Error! The \"pop\" call's second argument can only be a integer!" << std::endl;
+		std::cerr << "Second argument type: " << GetNodeTypeName(valueType) << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+
+		return nullptr;
+	}
+
+	// Finally, attempt to remove from the array
 	if (collectionType == NodeType::ARRAY)
-		static_cast<ArrayNode*>(collection)->Insert(value);
+	{
+		size_t length    = static_cast<ArrayNode*>(collection)->Size();
+		int32_t popIndex = static_cast<IntegerNode*>(value)->Value();
+	
+		// Make sure the pop index isn't a negative number
+		if (popIndex < 0)
+		{
+			std::cerr << "Interpreter Error! The \"pop\" call's index must not be a negative number!" << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return nullptr;
+		}
+
+		// Make sure that we are within bounds of the array
+		if (static_cast<size_t>(popIndex) >= length)
+		{
+			std::cerr << "Interpreter Error! The \"pop\" call's index must be within array bounds!" << std::endl;
+			std::cerr << "Array size: " << length << std::endl;
+			std::cerr << "Pop index: " << popIndex << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return nullptr;
+		}
+
+		static_cast<ArrayNode*>(collection)->Pop(static_cast<size_t>(popIndex));
+	}
 
 	return nullptr;
 }

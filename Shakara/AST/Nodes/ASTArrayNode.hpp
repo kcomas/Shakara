@@ -32,6 +32,13 @@ namespace Shakara
 				return *this;
 			}
 
+			inline ArrayNode& Pop(size_t index)
+			{
+				m_elements.erase(m_elements.begin() + index);
+
+				return *this;
+			}
+
 			inline ArrayNode& Set(size_t index, Node* node)
 			{
 				node->Parent(this);

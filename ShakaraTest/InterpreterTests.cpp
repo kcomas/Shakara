@@ -560,6 +560,8 @@ namespace ShakaraTest
 
 					print(amt(phrases))
 
+					pop(phrases, 3)
+
 					while (count < amt(phrases))
 					{
 						phrase = phrases[count]
@@ -588,9 +590,8 @@ namespace ShakaraTest
 				Shakara::Interpreter interpreter(output);
 				interpreter.Execute(&root);
 
-				// Should be "I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!"
 				Assert::AreEqual(
-					"5I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!woo!",
+					"5I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoeswoo!",
 					output.str().c_str()
 				);
 			}
