@@ -1707,6 +1707,10 @@ CallFlags ASTBuilder::_GetCallFlagFromIdentifier(const std::string& identifier)
 		return CallFlags::STRING_CAST;
 	else if (identifier == "boolean")
 		return CallFlags::BOOLEAN_CAST;
+	else if (identifier == "push")
+		return CallFlags::PUSH_COLLECTION;
+	else if (identifier == "pop")
+		return CallFlags::POP_COLLECTION;
 
 	return CallFlags::NONE;
 }

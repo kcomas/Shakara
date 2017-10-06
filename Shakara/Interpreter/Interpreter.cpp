@@ -699,6 +699,11 @@ Node* Interpreter::_ExecuteFunction(
 			call,
 			scope
 		);
+	else if (call->Flags() == CallFlags::PUSH_COLLECTION)
+		return _ExecutePush(
+			call,
+			scope
+		);
 	else if (call->Flags() == CallFlags::INTEGER_CAST)
 		return _ExecuteIntegerCast(
 			call,
@@ -1064,6 +1069,8 @@ Node* Interpreter::_ExecuteAmount(
 
 		if (m_errorHandle)
 			m_errorHandle();
+
+		return nullptr;
 	}
 
 	// If the argument is of a type, such
@@ -1138,10 +1145,148 @@ Node* Interpreter::_ExecuteAmount(
 
 		if (m_errorHandle)
 			m_errorHandle();
+		
+		return nullptr;
+	}
+}
+
+Node* Interpreter::_ExecutePush(
+	FunctionCall* push,
+	Scope&        scope
+)
+{
+	// Be sure that this is a print call
+	if (push->Flags() != CallFlags::PUSH_COLLECTION)
+		return nullptr;
+
+	// Make sure before doing anything that the
+	// call only has two arguments
+	if (push->Arguments().size() != 2)
+	{
+		std::cerr << "Interpreter Error! The \"push\" call can only be used with two arguments!" << std::endl;
+		std::cerr << "Argument amount: " << push->Arguments().size() << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+		
+		return nullptr;
 	}
 
-	if (deleteNode)
-		delete value;
+	// If the argument is of a type, such
+	// as a call or a binary op, execute
+	// it, and then return the string
+	Node*     collectionArg  = push->Arguments()[0];
+	NodeType  collectionType = collectionArg->Type();
+	Node*     collection     = collectionArg;
+
+	// First, grab the identifier value before
+	// trying to evaluate the type of argument
+	if (collectionType == NodeType::IDENTIFIER)
+	{
+		collection     = scope.Search(static_cast<IdentifierNode*>(collectionArg)->Value());
+		collectionType = collection->Type();
+	}
+	else if (collectionType == NodeType::CALL)
+	{
+		collection     = _ExecuteFunction(static_cast<FunctionCall*>(collectionArg), scope);
+		collectionType = collection->Type();
+	}
+	else if (collectionType == NodeType::BINARY_OP)
+	{
+		collection     = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(collectionArg), scope);
+		collectionType = collection->Type();
+	}
+	else if (collectionType == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+	{
+		collection     = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(collectionArg), scope);
+		collectionType = collection->Type();
+	}
+	
+	// Make sure that the current argument is either
+	// an array or a string
+	if (collectionType != NodeType::ARRAY)
+	{
+		std::cerr << "Interpreter Error! The \"push\" call's first argument can only be a string or an array!" << std::endl;
+		std::cerr << "First argument type: " << GetNodeTypeName(collectionType) << std::endl;
+
+		if (m_errorHandle)
+			m_errorHandle();
+
+		return nullptr;
+	}
+
+	// Check the capacity and make sure that pushing
+	// wouldn't overflow the array
+	if (collectionType == NodeType::ARRAY && static_cast<ArrayNode*>(collection)->Capacity())
+	{
+		Node*    capacity     = static_cast<ArrayNode*>(collection)->Capacity();
+		NodeType capacityType = capacity->Type();
+		size_t   amount       = static_cast<ArrayNode*>(collection)->Size();
+
+		if (capacityType != NodeType::INTEGER)
+		{
+			std::cerr << "Interpreter Error! Array capacity must be an integer!" << std::endl;
+			std::cerr << "Capacity type: " << GetNodeTypeName(capacityType) << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return nullptr;
+		}
+
+		int32_t capacityValue = static_cast<IntegerNode*>(capacity)->Value();
+
+		if (amount + 1 > static_cast<size_t>(capacityValue))
+		{
+			std::cerr << "Interpreter Error! Cannot push an array over capacity!" << std::endl;
+			std::cerr << "Capacity: " << capacityValue << std::endl;
+			std::cerr << "Amount: " << (amount + 1) << std::endl;
+
+			if (m_errorHandle)
+				m_errorHandle();
+
+			return nullptr;
+		}
+	}
+
+	// If the argument is of a type, such
+	// as a call or a binary op, execute
+	// it, and then return the string
+	Node*     valueArg  = push->Arguments()[1];
+	NodeType  valueType = valueArg->Type();
+	Node*     value     = valueArg;
+
+	// First, grab the identifier value before
+	// trying to evaluate the type of argument
+	if (valueType == NodeType::IDENTIFIER)
+	{
+		value     = scope.Search(static_cast<IdentifierNode*>(valueArg)->Value())->Clone();
+		valueType = value->Type();
+	}
+	else if (valueType == NodeType::CALL)
+	{
+		value     = _ExecuteFunction(static_cast<FunctionCall*>(valueArg), scope);
+		valueType = value->Type();
+	}
+	else if (valueType == NodeType::BINARY_OP)
+	{
+		value     = _ExecuteBinaryOperation(static_cast<BinaryOperation*>(valueArg), scope);
+		valueType = value->Type();
+	}
+	else if (valueType == NodeType::LOGICAL_OP)
+	{
+		value     = _ExecuteLogicalOperation(static_cast<BinaryOperation*>(valueArg), scope);
+		valueType = value->Type();
+	}
+	else if (valueType == NodeType::ARRAY_ELEMENT_IDENTIFIER)
+	{
+		value     = _GetArrayElement(static_cast<ArrayElementIdentifierNode*>(valueArg), scope)->Clone();
+		valueType = value->Type();
+	}
+
+	// Finally, insert the element at the end of the collection
+	if (collectionType == NodeType::ARRAY)
+		static_cast<ArrayNode*>(collection)->Insert(value);
 
 	return nullptr;
 }
@@ -1165,6 +1310,8 @@ Node* Interpreter::_ExecuteIntegerCast(
 
 		if (m_errorHandle)
 			m_errorHandle();
+
+		return nullptr;
 	}
 
 	// Grab the single argument and its
@@ -1275,6 +1422,8 @@ Node* Interpreter::_ExecuteIntegerCast(
 
 			if (m_errorHandle)
 				m_errorHandle();
+
+			return nullptr;
 		}
 
 		// Create the returnable integer node
@@ -1313,6 +1462,8 @@ Node* Interpreter::_ExecuteDecimalCast(
 
 		if (m_errorHandle)
 			m_errorHandle();
+
+		return nullptr;
 	}
 
 	// Grab the single argument and its
@@ -1423,6 +1574,8 @@ Node* Interpreter::_ExecuteDecimalCast(
 
 			if (m_errorHandle)
 				m_errorHandle();
+
+			return nullptr;
 		}
 
 		// Create the returnable integer node
@@ -1461,6 +1614,8 @@ Node* Interpreter::_ExecuteStringCast(
 
 		if (m_errorHandle)
 			m_errorHandle();
+
+		return nullptr;
 	}
 
 	// Grab the single argument and its
@@ -1601,6 +1756,8 @@ Node* Interpreter::_ExecuteBooleanCast(
 
 		if (m_errorHandle)
 			m_errorHandle();
+
+		return nullptr;
 	}
 
 	// Grab the single argument and its

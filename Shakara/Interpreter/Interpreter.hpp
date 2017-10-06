@@ -241,6 +241,30 @@ namespace Shakara
 		);
 
 		/**
+		 * Take in a special amount function call and
+		 * return the integer size of the collection.
+		 *
+		 * The scope argument is used for functions
+		 * to grab variables defined within.
+		 */
+		AST::Node* _ExecutePush(
+			AST::FunctionCall* push,
+			Scope&             scope
+		);
+
+		/**
+		 * Take a special pop function with the arguments
+		 * of an array and the index to pop
+		 *
+		 * The scope argument is used for functions
+		 * to grab variables defined within.
+		 */
+		AST::Node* _ExecutePop(
+			AST::FunctionCall* pop,
+			Scope&             scope
+		);
+
+		/**
 		 * Take in any kind of built-in type value
 		 * and try to cast it to an integer.
 		 *

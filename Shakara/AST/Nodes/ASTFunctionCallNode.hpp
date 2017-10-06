@@ -7,19 +7,22 @@ namespace Shakara
 	namespace AST
 	{
 		enum class CallFlags : uint8_t {
-			NONE         = 0x00,
-			PRINT        = 0x01,
-			TYPE         = 0x02,
-			AMOUNT       = 0x03,
+			NONE            = 0x00,
+			PRINT           = 0x01,
+			TYPE            = 0x02,
+			AMOUNT          = 0x03,
 
 			/**
 			 * Calls for casting between
 			 * built-in types
 			 */
-			INTEGER_CAST = 0x04,
-			DECIMAL_CAST = 0x05,
-			STRING_CAST  = 0x06,
-			BOOLEAN_CAST = 0x07,
+			INTEGER_CAST    = 0x04,
+			DECIMAL_CAST    = 0x05,
+			STRING_CAST     = 0x06,
+			BOOLEAN_CAST    = 0x07,
+
+			PUSH_COLLECTION = 0x08,
+			POP_COLLECTION  = 0x09
 		};
 
 		class FunctionCall : public Node

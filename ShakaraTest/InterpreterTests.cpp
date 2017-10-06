@@ -546,7 +546,7 @@ namespace ShakaraTest
 				// it into a stringstream
 				std::string code = R"(
 					potatoes = "Home-fried potatoes"
-					phrases = [4] {
+					phrases = [5] {
 						"I don't eat no ham and eggs",
 						"'Cause they're high in cholesterol",
 						potatoes,
@@ -556,9 +556,11 @@ namespace ShakaraTest
 					phrases[3] = "Yes!"
 					count      = 0
 
+					push(phrases, "woo!")
+
 					print(amt(phrases))
 
-					while (count < 4)
+					while (count < amt(phrases))
 					{
 						phrase = phrases[count]
 
@@ -588,7 +590,7 @@ namespace ShakaraTest
 
 				// Should be "I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!"
 				Assert::AreEqual(
-					"4I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!",
+					"5I don't eat no ham and eggs'Cause they're high in cholesterolHome-fried potatoesYes!woo!",
 					output.str().c_str()
 				);
 			}
