@@ -9,5 +9,7 @@
 #include <vector>
 #include <functional>
 #include <map>
+#include <stddef.h>
+#include <cmath>
 
 #define SHAKARA_CMD_ARGS_NAME "shk__cmd_args"
