@@ -189,7 +189,7 @@ syntax:
 Like with the if statements, you may omit braces if a single statement
 is to be used in the loop.
 
-### *Arrays*
+### Arrays
 
 Arrays are a necessary type for any programming language, what's currently
 in the air though is the syntax and form of these arrays. My thoughts are
@@ -235,6 +235,14 @@ Grabbing the amount of items in the array would be used as a function, like in P
 Arrays in Shakara are to be zero-based, and would be accessed like most C-like languages, as shown below:
 
     array_name[index]
+
+For arrays, you can insert and remove from them using the `push` and `pop` methods respectively
+
+    push(array, <element>)
+
+Pop is different in that it takes the array and then an index as to where the element to remove is
+
+    pop(array, <element index>)
 
 ### Command Line Arguments
 
